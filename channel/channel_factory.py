@@ -21,6 +21,10 @@ def create_channel(channel_type):
         from channel.wechatnt.ntchat_channel import NtchatChannel
 
         return NtchatChannel()
+    elif channel_type == "wcferry":
+        from channel.wcferry.wcferry_channel import WcFerryChannel
+
+        return WcFerryChannel()
     elif channel_type == "weworktop":
         from channel.weworktop.weworktop_channel import WeworkTopChannel
 

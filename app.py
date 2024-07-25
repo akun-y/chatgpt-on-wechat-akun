@@ -37,7 +37,7 @@ def run():
             channel_name = "terminal"
 
         channel = channel_factory.create_channel(channel_name)
-        if channel_name in ["ntchat", "wework", "weworktop"]:
+        if channel_name in ["wcferry","ntchat", "wework", "weworktop"]:
             PluginManager().load_plugins()
 
         # startup channel
