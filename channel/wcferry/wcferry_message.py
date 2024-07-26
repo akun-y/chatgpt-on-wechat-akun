@@ -1,5 +1,3 @@
-import datetime
-import json
 import os
 import re
 import time
@@ -7,6 +5,7 @@ import xml.etree.ElementTree as ET
 from bridge.context import ContextType
 from channel.chat_message import ChatMessage
 from channel.wcferry.WeFerryImageDecoder import WcFerryImageDecoder
+from channel.wcferry.wcferry_run import load_json_from_file, save_json_to_file
 from common.log import logger
 import urllib.request
 
@@ -77,35 +76,16 @@ def get_display_name_or_nickname(room_members, group_wxid, wxid):
             member = members[wxid]
             return member['display_name'] if member['display_name'] else member['nickname']
     return None  # 如果没有找到对应的group_wxid或wxid，则返回None
-
-def load_json_from_file(directory,filename):
-    try:
-        # 生成文件路径
-        file_path = os.path.join(directory, filename)
-        
-        # 检查文件是否存在
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"No such file: '{file_path}'")
-        
-        # 打开文件并读取数据
-        with open(file_path, "r", encoding="utf-8") as f:
-            contacts = json.load(f)
-        
-        print(f"Contacts successfully loaded from {file_path}")
-        return contacts
-    
-    except Exception as e:
-        print(f"Failed to read from file: {e}")
-        return None
     
 class WcFerryMessage(ChatMessage):
-    def __init__(self, scf, wechat_msg, is_group=False):
+    def __init__(self,channel, scf, wechat_msg):
         try:
             super().__init__(wechat_msg)
             self.msg_id = wechat_msg.id
             self.create_time = wechat_msg.ts
-            self.is_group = is_group
+            self.is_group = wechat_msg._is_group
             self.scf = scf
+            self.channel = channel
 
             # 获取一些可能多次使用的值
             login_info = self.scf.get_user_info()
@@ -114,12 +94,8 @@ class WcFerryMessage(ChatMessage):
 
             directory = os.path.join(os.getcwd(), "tmp")
             # 从文件读取数据，并构建以 wxid 为键的字典
-            contracts = load_json_from_file(directory,'wx_contacts.json')
-            rooms = load_json_from_file(directory,'wx_rooms.json')
-            # with open(os.path.join(current_dir, "tmp", 'wx_contacts.json'), 'r', encoding='utf-8') as f:
-            #     contacts = {contact['wxid']: contact['nickname'] for contact in json.load(f)}
-            # with open(os.path.join(current_dir, "tmp", 'wx_rooms.json'), 'r', encoding='utf-8') as f:
-            #     rooms = {room['wxid']: room['nickname'] for room in json.load(f)}
+            contracts = load_json_from_file(directory,'wcferry_contacts.json')
+            rooms = load_json_from_file(directory,'wcferry_rooms.json')
             data = wechat_msg
             self.from_user_id = data.sender
             self.from_user_nickname = contracts[data.sender] if data.sender in contracts else None
@@ -162,9 +138,7 @@ class WcFerryMessage(ChatMessage):
                 self._prepare_fn = lambda: None
                 if self.is_group:
                     directory = os.path.join(os.getcwd(), "tmp")
-                    file_path = os.path.join(directory, "wx_room_members.json")
-                    with open(file_path, 'r', encoding='utf-8') as file:
-                        room_members = json.load(file)
+                    room_members = load_json_from_file(directory, "wcferry_room_members.json")
                     self.from_user_nickname = get_display_name_or_nickname(room_members, data.roomid,
                                                                            self.from_user_id)
             elif wechat_msg.type == 11054:  # 分享链接消息类型
@@ -198,9 +172,7 @@ class WcFerryMessage(ChatMessage):
                     self.content = data.get('raw_msg')
                     if self.is_group:
                         directory = os.path.join(os.getcwd(), "tmp")
-                        file_path = os.path.join(directory, "wx_room_members.json")
-                        with open(file_path, 'r', encoding='utf-8') as file:
-                            room_members = json.load(file)
+                        room_members = load_json_from_file(directory, "wcferry_room_members.json")
                         self.actual_user_nickname = get_display_name_or_nickname(room_members, data.roomid,
                                                                                  self.from_user_id)
                 else:
@@ -262,9 +234,7 @@ class WcFerryMessage(ChatMessage):
                     if refermsg is not None:
                         if self.is_group:
                             directory = os.path.join(os.getcwd(), "tmp")
-                            file_path = os.path.join(directory, "wx_room_members.json")
-                            with open(file_path, 'r', encoding='utf-8') as file:
-                                room_members = json.load(file)
+                            room_members = load_json_from_file(directory, "wcferry_room_members.json")
                             self.actual_user_nickname = get_display_name_or_nickname(room_members, data.roomid,
                                                                                      self.from_user_id)
                             self.content = msg.text
@@ -278,37 +248,29 @@ class WcFerryMessage(ChatMessage):
                     else:
                         pass
 
-            elif wechat_msg.type == 11098:    #  加入群聊
+            elif wechat_msg.type == 10000:    #  加入群聊
                 self.ctype = ContextType.JOIN_GROUP
-                self.actual_user_nickname = data['member_list'][0]['nickname']
-                self.content = f"{self.actual_user_nickname}加入了群聊！"
-                directory = os.path.join(os.getcwd(), "tmp")
-                result = {}
-                for room_wxid in rooms.keys():
-                    room_members = wechatnt.get_room_members(room_wxid)
-                    result[room_wxid] = room_members
-                with open(os.path.join(directory, 'wx_room_members.json'), 'w', encoding='utf-8') as f:
-                    json.dump(result, f, ensure_ascii=False, indent=4)
+                self.actual_user_nickname = contracts[data.sender] if data.sender in contracts else None
+                self.content = f"{self.actual_user_nickname}加入了群聊！" if self.actual_user_nickname else data.content
+                
+                result = self.channel.getAllRoomMembers()
+                directory = os.path.join(os.getcwd(), "tmp")                
+                save_json_to_file(directory, result, "wcferry_room_members.json")
             elif wechat_msg.type == 11099:    #  退群通知
                 self.ctype = ContextType.LEAVE_GROUP
-                self.actual_user_nickname = data['member_list'][0]['nickname']
+                self.actual_user_nickname = contracts[data.sender] if data.sender in contracts else None
                 self.content = f"{self.actual_user_nickname}退出了群聊！"
+               
+                result = self.channel.getAllRoomMembers()
                 directory = os.path.join(os.getcwd(), "tmp")
-                result = {}
-                for room_wxid in rooms.keys():
-                    room_members = wechatnt.get_room_members(room_wxid)
-                    result[room_wxid] = room_members
-                with open(os.path.join(directory, 'wx_room_members.json'), 'w', encoding='utf-8') as f:
-                    json.dump(result, f, ensure_ascii=False, indent=4)
+                save_json_to_file(directory, result, "wcferry_room_members.json")
             else:
                 raise NotImplementedError(
                     "Unsupported message type: Type:{} MsgType:{}".format(wechat_msg.type, wechat_msg.type))
 
             if self.is_group:
                 directory = os.path.join(os.getcwd(), "tmp")
-                file_path = os.path.join(directory, "wx_room_members.json")
-                with open(file_path, 'r', encoding='utf-8') as file:
-                    room_members = json.load(file)
+                room_members = load_json_from_file(directory, "wcferry_room_members.json")
                 self.other_user_nickname = rooms[data.roomid]['nickname']
                 self.other_user_id = data.roomid
                 if self.from_user_id:

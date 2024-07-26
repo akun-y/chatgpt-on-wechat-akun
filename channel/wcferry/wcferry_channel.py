@@ -23,6 +23,7 @@ from config import conf
 from channel.wcferry.wcferry_run import *
 from wcferry import Wcf, WxMsg
 
+from channel.wcferry.wcferry_run import save_json_to_file
 from wcferry.roomdata_pb2 import RoomData
 
 
@@ -99,7 +100,7 @@ def all_msg_handler(wcf: Wcf, message: WxMsg):
     logger.debug(f"收到消息: {message}")
 
     try:
-        cmsg = WcFerryMessage(wcf, message, message._is_group)
+        cmsg = WcFerryMessage(WcFerryChannel(), wcf, message)
         ifgroup = message._is_group
     except NotImplementedError as e:
         logger.debug("[WX]single message {} skipped: {}".format(message["MsgId"], e))
@@ -135,23 +136,6 @@ def on_recv_text_msg(wechat_instance, message):
         logger.debug("ntchat未开启自动同意好友申请")
 
 
-def save_json_to_file(directory, contacts, filename):
-    try:
-        # 检查目录是否存在，如果不存在则创建
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        # 生成文件路径
-        file_path = os.path.join(directory, filename)
-        # 打开文件并写入数据
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(contacts, f, ensure_ascii=False, indent=4)
-
-        logger.info(f"Successfully saved to {file_path}")
-
-    except Exception as e:
-        logger.error(f"Failed to write to file: {e}")
-
-
 @singleton
 class WcFerryChannel(ChatChannel):
     NOT_SUPPORT_REPLYTYPE = []
@@ -166,26 +150,20 @@ class WcFerryChannel(ChatChannel):
         directory = os.path.join(os.getcwd(), "tmp")
         rooms = self.getAllrooms()
 
-        save_json_to_file(directory, contacts, "wx_contacts.json")
-        save_json_to_file(directory, rooms, "wx_rooms.json")
+        save_json_to_file(directory, contacts, "wcferry_contacts.json")
+        save_json_to_file(directory, rooms, "wcferry_rooms.json")
         # 创建一个空字典来保存结果
         result = {}
 
         # 遍历列表中的每个字典
         for room_id in rooms:
             room = rooms[room_id]
-            # 获取聊天室ID
-            room_wxid = room["wxid"]
-            # 获取聊天室成员
+            room_wxid = room_id
             room_members = room["member_list"]
-            # 将聊天室成员保存到结果字典中
             result[room_wxid] = room_members
 
         # 将结果保存到json文件中
-        with open(
-            os.path.join(directory, "wx_room_members.json"), "w", encoding="utf-8"
-        ) as f:
-            json.dump(result, f, ensure_ascii=False, indent=4)
+        save_json_to_file(directory, result, "wcferry_room_members.json")
         self.user_id = login_info["wxid"]
         self.name = login_info["name"]
         logger.info(f"登录信息:>>>user_id:{self.user_id}>>>>>>>>name:{self.name}")
@@ -289,13 +267,13 @@ class WcFerryChannel(ChatChannel):
         if reply.type == ReplyType.TEXT or reply.type == ReplyType.TEXT_:
             match = re.search(r"^@(.*?)\n", reply.content)
             if match:
-                name = match.group(1)  # 获取第一个组的内容，即名字
-                directory = os.path.join(os.getcwd(), "tmp")
-                file_path = os.path.join(directory, "wx_room_members.json")
-                with open(file_path, "r", encoding="utf-8") as file:
-                    room_members = json.load(file)
-                wxid = get_wxid_by_name(room_members, receiver, name)
-                wxid_list = wxid
+                # name = match.group(1)  # 获取第一个组的内容，即名字
+                # directory = os.path.join(os.getcwd(), "tmp")
+                # file_path = os.path.join(directory, "wcferry_room_members.json")
+                # with open(file_path, "r", encoding="utf-8") as file:
+                #     room_members = json.load(file)
+                # wxid = get_wxid_by_name(room_members, receiver, name)
+                # wxid_list = [wxid]
                 # self.robot.sendTextMsg(reply.content, receiver, wxid_list)
                 self.robot.sendTextMsg(reply.content, receiver)
             else:
@@ -370,6 +348,14 @@ class WcFerryChannel(ChatChannel):
         return {contact["UserName"]: contact["NickName"] for contact in contacts}
 
     def getAllrooms(self) -> dict:
+        wcf_rooms = {}
+        wcf_friends = {}
+        for contact in wcf.get_contacts():
+            if contact["wxid"].endswith("chatroom"):
+                wcf_rooms[contact["wxid"]] = {'name': contact["name"]}
+            else:
+                wcf_friends[contact["wxid"]] = {'name': contact["name"]}
+
         contacts = self.getAllContacts()
         rooms = wcf.query_sql(
             "MicroMsg.db",
@@ -387,39 +373,38 @@ class WcFerryChannel(ChatChannel):
             crd.ParseFromString(bs)
 
             for member in crd.members:
-                name = member.name
-
-                if not name:
-                    if member.wxid in contacts:
-                        name = contacts[member.wxid]
+                display_name = member.name
+                nickname = ''
+                if not display_name and member.wxid in contacts:
+                    display_name = contacts[member.wxid]
+                if not display_name and member.wxid in wcf_friends:
+                    display_name = wcf_friends[member.wxid]['name']
+                    
+                if not nickname and  member.wxid in contacts:
+                    nickname = contacts[member.wxid]
+                if not nickname and  member.wxid in wcf_friends:
+                    nickname = wcf_friends[member.wxid]['name']
+                        
                 members[member.wxid] = {
-                    "nickname": name,
-                    "display_name": name,
+                    "nickname": nickname,
+                    "display_name": display_name,
                 }
-
+            room_id = room["ChatRoomName"]
             chat_room_info = {
-                "wxid": room["ChatRoomName"],
+                "nickname": wcf_rooms[room_id]['name'],
                 "member_list": members,
-                "nickname": room["ChatRoomName"],
+                
             }
             result[room["ChatRoomName"]] = chat_room_info
 
-        # return        {
-        #     room["ChatRoomName"]: {
-        #         "wxid": room["ChatRoomName"],
-        #         "nickname": room["ChatRoomName"],
-        #         "member_list": room["UserNameList"].split("^"),
-        #     }
-        #     for room in rooms
-        # }
         return result
 
-    def getRoomMember(self, room):
-        """
-        获取群成员
-        格式: {"wxid": "NickName"}
-        """
-        room_members = wcf.query_sql(
-            "MicroMsg.db",
-            "SELECT * FROM ChatRoomMember WHERE ChatRoomName = '{}';".format(room),
-        )
+    def getAllRoomMembers(self):
+        rooms = self.getAllrooms()
+        result = {}
+        for room_id in rooms:
+            room = rooms[room_id]
+            room_wxid = room["wxid"]
+            room_members = room["member_list"]
+            result[room_wxid] = room_members
+        return result

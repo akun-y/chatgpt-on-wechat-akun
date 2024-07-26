@@ -110,7 +110,7 @@ class PluginManager:
                             self.loaded[plugin_path] = importlib.import_module(import_path)
                         self.current_plugin_path = None
                     except Exception as e:
-                        logger.warn("Failed to import plugin %s: %s" % (plugin_name, e))
+                        logger.error("Failed to import plugin %s: %s" % (plugin_name, e))
                         continue
         pconf = self.pconf
         news = [self.plugins[name] for name in self.plugins]
