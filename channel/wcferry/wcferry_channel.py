@@ -349,12 +349,24 @@ class WcFerryChannel(ChatChannel):
 
     def getAllrooms(self) -> dict:
         wcf_rooms = {}
+        wcf_rooms_wxid_name = {}
+        wcf_rooms_wxid = []
+        wcf_rooms_name = []
         wcf_friends = {}
         for contact in wcf.get_contacts():
             if contact["wxid"].endswith("chatroom"):
-                wcf_rooms[contact["wxid"]] = {'name': contact["name"]}
+                wcf_rooms[contact["wxid"]] = {"name": contact["name"]}
+
+                wcf_rooms_wxid_name[contact["wxid"]] = contact["name"]
+                wcf_rooms_wxid.append(contact["wxid"])
+                wcf_rooms_name.append(contact["name"])
             else:
-                wcf_friends[contact["wxid"]] = {'name': contact["name"]}
+                wcf_friends[contact["wxid"]] = {"name": contact["name"]}
+
+        directory = os.path.join(os.getcwd(), "tmp")
+        save_json_to_file(directory, wcf_rooms_wxid_name, "rooms-wxid-name.json")
+        save_json_to_file(directory, wcf_rooms_wxid, "rooms-wxid.json")
+        save_json_to_file(directory, wcf_rooms_name, "rooms-name.json")
 
         contacts = self.getAllContacts()
         rooms = wcf.query_sql(
@@ -374,26 +386,25 @@ class WcFerryChannel(ChatChannel):
 
             for member in crd.members:
                 display_name = member.name
-                nickname = ''
+                nickname = ""
                 if not display_name and member.wxid in contacts:
                     display_name = contacts[member.wxid]
                 if not display_name and member.wxid in wcf_friends:
-                    display_name = wcf_friends[member.wxid]['name']
-                    
-                if not nickname and  member.wxid in contacts:
+                    display_name = wcf_friends[member.wxid]["name"]
+
+                if not nickname and member.wxid in contacts:
                     nickname = contacts[member.wxid]
-                if not nickname and  member.wxid in wcf_friends:
-                    nickname = wcf_friends[member.wxid]['name']
-                        
+                if not nickname and member.wxid in wcf_friends:
+                    nickname = wcf_friends[member.wxid]["name"]
+
                 members[member.wxid] = {
                     "nickname": nickname,
                     "display_name": display_name,
                 }
             room_id = room["ChatRoomName"]
             chat_room_info = {
-                "nickname": wcf_rooms[room_id]['name'],
+                "nickname": wcf_rooms[room_id]["name"],
                 "member_list": members,
-                
             }
             result[room["ChatRoomName"]] = chat_room_info
 
