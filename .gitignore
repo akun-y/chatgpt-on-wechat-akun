@@ -40,6 +40,7 @@ plugins/banwords/lib/__pycache__
 test
 *.db
 channel/weworktop/last_key.txt
+*.pem
 
 
 

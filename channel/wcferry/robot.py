@@ -2,6 +2,7 @@
 
 import logging
 import re
+import threading
 import time
 import xml.etree.ElementTree as ET
 from queue import Empty
@@ -23,6 +24,7 @@ class Robot:
         self.wcf = wcf
         self.wxid = self.wcf.get_self_wxid()
         self.allContacts = self.getAllContacts()
+       # self.chatrooms = self.getAllrooms()
         self.msgHandler = all_msg_handler
 
         logger.warning("未配置模型")
@@ -30,6 +32,7 @@ class Robot:
         self.whiteListGroups = conf().get("group_name_white_list", [])
 
         logger.info(f"已选择: {self.chat}")
+        
 
     @staticmethod
     def value_check(args: dict) -> bool:
@@ -176,9 +179,17 @@ class Robot:
         """
         保持机器人运行，不让进程退出
         """
-        while True:
-            # self.runPendingJobs()
-            time.sleep(1)
+        try:
+            while True:
+                # self.runPendingJobs()
+                time.sleep(1)
+        except KeyboardInterrupt:
+            self.wcf.cleanup()  # 退出前清理环境
+            exit(0)
+            os._exit(0)
+            # sys.exit(0)
+
+
 
     def autoAcceptFriendRequest(self, msg: WxMsg) -> None:
         try:

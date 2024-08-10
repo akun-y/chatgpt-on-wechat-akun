@@ -26,6 +26,8 @@ from wcferry import Wcf, WxMsg
 from channel.wcferry.wcferry_run import save_json_to_file
 from wcferry.roomdata_pb2 import RoomData
 
+from plugins.plugin_manager import PluginManager
+
 
 def download_and_compress_image(url, filename, quality=80):
     # 确定保存图片的目录
@@ -143,12 +145,18 @@ class WcFerryChannel(ChatChannel):
     def __init__(self):
         super().__init__()
 
+        self.rooms_ary = []
+        self.contracts_ary = []
+
     def startup(self):
         logger.info("等待登录······")
         login_info = wcf.get_user_info()
         contacts = self.getAllContacts()
         directory = os.path.join(os.getcwd(), "tmp")
         rooms = self.getAllrooms()
+
+        self.rooms_ary = self.make_rooms_ary_groupx(rooms)
+        self.contracts_ary = self.make_contracts_ary_groupx(contacts)
 
         save_json_to_file(directory, contacts, "wcferry_contacts.json")
         save_json_to_file(directory, rooms, "wcferry_rooms.json")
@@ -181,6 +189,16 @@ class WcFerryChannel(ChatChannel):
         # robot.enableRecvMsg()     # 可能会丢消息？
         robot.enableReceivingMsg()  # 加队列
         self.robot = robot
+
+        # 搜寻iKnowWxAPI 并使用其 post函数发送群及通讯录信息到groupx服务器
+        plugins = PluginManager().list_plugins()
+        for plugin in plugins:
+            if plugins[plugin].enabled:
+                if plugins[plugin].namecn == "iKnowWxAPI":
+                    PluginManager().instances[plugin].post_contacts_to_groupx(
+                        self.rooms_ary, self.contracts_ary
+                    )
+                    break
         # 让机器人一直跑
         robot.keepRunningAndBlockProcess()
         # wcf 结束------------------------
@@ -331,11 +349,32 @@ class WcFerryChannel(ChatChannel):
             wcf.send_xml(reply.content, receiver)
             logger.info("[WX] sendFile={}, receiver={}".format(reply.content, receiver))
         elif reply.type == ReplyType.LINK:
-            wcf.send_xml(reply.content, receiver)
+            # wcf.send_xml(reply.content, receiver)
+            jsonObj = json.loads(reply.content)
+            wcf.send_rich_text(
+                name=jsonObj["name"],
+                account=jsonObj["account"],
+                title=jsonObj["title"],
+                digest=jsonObj["digest"],
+                url=jsonObj["url"],
+                thumburl=jsonObj["thumburl"],
+                receiver=receiver,
+            )
             logger.info("[WX] sendLink={}, receiver={}".format(reply.content, receiver))
         elif reply.type == ReplyType.XML:
             wcf.send_xml(reply.content, receiver)
             logger.info("[WX] sendXML={}, receiver={}".format(reply.content, receiver))
+        # elif reply.type == ReplyType.RICH_TEXT:
+        #     # self, name: str, account: str, title: str, digest: str, url: str, thumburl: str, receiver: str) -> int:
+        #     wcf.send_rich_text(
+        #         name="name",
+        #         account="account",
+        #         title="title",
+        #         digest="digest",
+        #         url="https://www.baidu.com",
+        #         thumburl="https://inews.gtimg.com/om_bt/O6SG7dHjdG0kWNyWz6WPo2_3v6A6eAC9ThTazwlKPO1qMAA/641",
+        #         receiver=receiver,
+        #     )
 
     def getAllContacts(self) -> dict:
         """
@@ -343,7 +382,7 @@ class WcFerryChannel(ChatChannel):
         格式: {"wxid": "NickName"}
         """
         contacts = wcf.query_sql(
-            "MicroMsg.db", "SELECT UserName, NickName FROM Contact LIMIT 400;"
+            "MicroMsg.db", "SELECT UserName, NickName FROM Contact LIMIT 1000;"
         )
         return {contact["UserName"]: contact["NickName"] for contact in contacts}
 
@@ -371,7 +410,7 @@ class WcFerryChannel(ChatChannel):
         contacts = self.getAllContacts()
         rooms = wcf.query_sql(
             "MicroMsg.db",
-            "SELECT ChatRoomName,UserNameList,RoomData FROM ChatRoom LIMIT 400;",
+            "SELECT ChatRoomName,UserNameList,RoomData FROM ChatRoom LIMIT 1000;",
         )
 
         result = {}
@@ -419,3 +458,32 @@ class WcFerryChannel(ChatChannel):
             room_members = room["member_list"]
             result[room_wxid] = room_members
         return result
+
+    def make_rooms_ary_groupx(self, rooms):
+        rooms_ary = []
+        for wxid, item in rooms.items():
+            nickname = item.get("nickname")
+            member_list = []
+            for wxid2, member in item.get("member_list").items():
+                member_list.append(
+                    {
+                        "wxid": wxid2,
+                        "UserName": wxid2,
+                        "NickName": member.get("nickname"),
+                    }
+                )
+            rooms_ary.append(
+                {
+                    "wxid": wxid,
+                    "UserName": wxid,
+                    "NickName": nickname,
+                    "MemberList": member_list,
+                }
+            )
+        return rooms_ary
+
+    def make_contracts_ary_groupx(self, contracts):
+        contracts_ary = []
+        for wxid, member in contracts.items():
+            contracts_ary.append({"wxid": wxid, "UserName": wxid, "NickName": member})
+        return contracts_ary
