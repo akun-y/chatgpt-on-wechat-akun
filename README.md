@@ -28,7 +28,8 @@
 - [x] 高度定制：依赖fastgpt接口，可实现每个群聊对应不同的应用知识库
 
 # **交流群：**
-![微信图片_20240729112657](https://github.com/user-attachments/assets/508ba4a3-6b44-45ae-9054-afe3c0f41d96)
+![微信图片_20240810104418](https://github.com/user-attachments/assets/06d7fba2-c81c-43b3-940a-a9c581a52153)
+
 
 # 更新日志
 >**2024.07.16：** 同步COW bot模型，ContextType.LINK 改为COW的ContextType.SHARING类型（避免使用一些总结文章插件报错）,修复文字转语音无法播放的问题，azure语音升级为多语言晓晓（有感情）
