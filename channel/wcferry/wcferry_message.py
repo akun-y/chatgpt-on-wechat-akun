@@ -70,11 +70,14 @@ def get_nickname(contacts, wxid):
 
 
 def get_display_name_or_nickname(room_members, group_wxid, wxid):
-    if group_wxid in room_members:
-        members = room_members[group_wxid]
-        for member_id in members[wxid]:
-            member = members[wxid]
-            return member['display_name'] if member['display_name'] else member['nickname']
+    try:
+        if group_wxid in room_members:
+            members = room_members[group_wxid]
+            for member_id in members.get(wxid,''):
+                member = members[wxid]
+                return member['display_name'] if member['display_name'] else member['nickname']
+    except Exception as e:
+        logger.error(f"Error occurred while getting display name or nickname: {e}")
     return None  # 如果没有找到对应的group_wxid或wxid，则返回None
     
 class WcFerryMessage(ChatMessage):
