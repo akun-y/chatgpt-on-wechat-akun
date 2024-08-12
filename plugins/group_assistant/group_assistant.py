@@ -30,11 +30,12 @@ class GroupAssistant(Plugin):
             # 如果配置文件不存在
             if not os.path.exists(config_path):
                 # 输出日志信息，配置文件不存在，将使用模板
-                logger.error('[GroupAssistant] 配置文件不存在，法启动群聊邀请插件')
+                logger.error("[GroupAssistant] 配置文件不存在，法启动群聊邀请插件")
                 return
-            elif channel_type != "ntchat" and channel_type != "weworktop":
-                logger.error('[GroupAssistant] 不支持的消息通道，无法启动群聊邀请插件')
+            elif channel_type not in ["ntchat", "wcferry", "weworktop"]:
+                logger.error("[GroupAssistant] 不支持的消息通道，无法启动群聊邀请插件")
                 return
+
                 # 打开并读取配置文件
             with open(config_path, "r", encoding="utf-8") as f:
                 # 加载 JSON 文件
@@ -97,7 +98,9 @@ class GroupAssistant(Plugin):
             logger.info("[GroupAssistant]此消息不是进群请求···")
             return
         e_context["reply"] = reply
-        e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+        e_context.action = (
+            EventAction.BREAK_PASS
+        )  # 事件结束，并跳过处理context的默认逻辑
 
     def get_help_text(self, **kwargs):
         help_text = "邀请进群插件"

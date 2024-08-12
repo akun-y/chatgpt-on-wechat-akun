@@ -337,8 +337,8 @@ class WcFerryChannel(ChatChannel):
             wcf.send_call_up(receiver)
             logger.info("[WX] sendCALLUP, receiver={}".format(receiver))
         elif reply.type == ReplyType.InviteRoom:
-            member_list = [receiver]
-            wcf.invite_room_member(reply.content, member_list)
+            member_list = receiver
+            wcf.invite_chatroom_members(reply.content, member_list)
             logger.info(
                 "[WX] sendInviteRoom={}, receiver={}".format(reply.content, receiver)
             )
