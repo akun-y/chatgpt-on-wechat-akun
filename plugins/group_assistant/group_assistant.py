@@ -13,9 +13,9 @@ from config import conf
     name="group_assistant",
     desire_priority=20,
     hidden=False,
-    desc="group_assistant",
-    version="0.1",
-    author="chazzjimel",
+    desc="group_assistant;wx:akun-hz",
+    version="0.2.1",
+    author="akun.yunqi",
 )
 class GroupAssistant(Plugin):
     def __init__(self):

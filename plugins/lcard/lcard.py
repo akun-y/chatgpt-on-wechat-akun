@@ -1,14 +1,10 @@
 # encoding:utf-8
 import datetime
-import threading
-import time
 from datetime import datetime
 import plugins
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
-from channel.chat_message import ChatMessage
 import plugins.lcard.app_card as fun
-from channel.wechatnt.nt_run import wechatnt
 from plugins import *
 import requests
 
@@ -17,7 +13,7 @@ import requests
     desire_priority=100,
     namecn="lcard",
     desc="发送卡片式链接和小程序",
-    version="0.2.2",
+    version="0.3.1",
     author="Francis",
 )
 class lcard(Plugin):
@@ -70,7 +66,7 @@ class lcard(Plugin):
             desc ="涵盖：今日头条、抖音、Github、吾爱、掘金、bilibili、百度、知乎、网易、微博...\n追踪全网热点、简单高效阅读。"
             image_url="https://mmbiz.qpic.cn/sz_mmbiz_jpg/RiacFDBX14xAWVSLByXwA4pg6jickFZQT09smokU52wziaZhibhtkSIBll5wKiawKrDmXWwf1YYGq4ZiaJYGfViaDZDrw/300?wxtype=jpeg&amp;wxfrom=401"
             xml_link = fun.get_xml(to_user_id,url, gh_id, username, title, desc, image_url)
-            _set_reply_text(xml_link, e_context, level=ReplyType.LINK)
+            _set_reply_text(xml_link, e_context, level=ReplyType.XML)
             return
         elif content == "新闻直播间":
             video_mp = fun.cctv13_live_xml(to_user_id)

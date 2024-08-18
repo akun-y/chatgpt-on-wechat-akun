@@ -343,6 +343,8 @@ class ChatChannel(Channel):
                     pass
                 elif reply.type == ReplyType.GIF:
                     pass
+                elif reply.type == ReplyType.XML:
+                    pass
                 else:
                     logger.error("[WX] unknown reply type: {}".format(reply.type))
                     return

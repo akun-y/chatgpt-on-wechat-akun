@@ -3,7 +3,6 @@ import urllib
 
 import requests
 
-from channel.wechatnt.nt_run import wechatnt
 from common.log import logger
 import re
 

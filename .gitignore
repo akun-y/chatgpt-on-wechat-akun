@@ -10,7 +10,7 @@ venv*
 config.json
 QR.png
 nohup.out
-tmp
+
 plugins/keyword/**/
 plugins/godcmd/**/
 plugins.json
@@ -46,3 +46,5 @@ channel/weworktop/last_key.txt
 
 plugins/godcmd/godcmd.py
 logs/
+images/
+tmp/
