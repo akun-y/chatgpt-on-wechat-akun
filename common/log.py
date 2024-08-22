@@ -12,8 +12,8 @@ def _reset_logger(log):
     console_handle = logging.StreamHandler(sys.stdout)
     console_handle.setFormatter(
         logging.Formatter(
-            "[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d] - %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
+            "%(message)s -[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d]",
+            datefmt="%H:%M:%S",
         )
     )
     file_handle = logging.FileHandler("run.log", encoding="utf-8")

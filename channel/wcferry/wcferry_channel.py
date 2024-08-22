@@ -31,7 +31,7 @@ from plugins.plugin_manager import PluginManager
 
 def download_and_compress_image(url, filename, quality=80):
     # 确定保存图片的目录
-    directory = os.path.join(os.getcwd(), "tmp","images")
+    directory = os.path.join(os.getcwd(), "tmp", "images")
     # 如果目录不存在，则创建目录
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -49,7 +49,7 @@ def download_and_compress_image(url, filename, quality=80):
 
 def download_video(url, filename):
     # 确定保存视频的目录
-    directory = os.path.join(os.getcwd(), "tmp","videos")
+    directory = os.path.join(os.getcwd(), "tmp", "videos")
     # 如果目录不存在，则创建目录
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -74,13 +74,13 @@ def download_video(url, filename):
     return video_path
 
 
-def get_wxid_by_name(room_members, group_wxid, name):
-    if group_wxid in room_members:
-        for member_id in room_members[group_wxid]:
-            member = room_members[group_wxid][member_id]
-            if member["display_name"] == name or member["nickname"] == name:
-                return member_id
-    return None  # 如果没有找到对应的group_wxid或name，则返回None
+# def get_wxid_by_name(room_members, group_wxid, name):
+#     if group_wxid in room_members:
+#         for member_id in room_members[group_wxid]:
+#             member = room_members[group_wxid][member_id]
+#             if member["display_name"] == name or member["nickname"] == name:
+#                 return member_id
+#     return None  # 如果没有找到对应的group_wxid或name，则返回None
 
 
 def _check(func):
@@ -145,37 +145,74 @@ class WcFerryChannel(ChatChannel):
     def __init__(self):
         super().__init__()
 
-        self.rooms_ary = []
-        self.contracts_ary = []
-        self.contracts_blobal = {}
+       # self.rooms_ary = []
+        self.contracts_global = {}
+        self.directory = os.path.join(os.getcwd(), "tmp")
+
+    def thread_run(self):
+        def fun_proc():
+            time.sleep(5)
+            self.saveOtherInfo()
+
+            save_json_to_file(self.directory, self.contacts, "wcferry_contacts.json")
+
+            # 遍历列表中的每个字典
+            for room_id in self.rooms:
+                room = self.rooms[room_id]
+                # 该变量一般只有display_name或者 nickname 和 display_name 都没有
+                room_members = room["member_list"]
+
+                # 必定包括所有成员的display_name
+                crs = wcf.query_sql(
+                    "MicroMsg.db",
+                    f"SELECT RoomData FROM ChatRoom WHERE ChatRoomName = '{room_id}';",
+                )
+                if not crs:
+                    continue
+
+                bs = crs[0].get("RoomData")
+                if not bs:
+                    continue
+
+                crd = RoomData()
+                crd.ParseFromString(bs)
+                if not bs:
+                    continue
+
+                for member in crd.members:
+                    if not room_members[member.wxid].get("display_name"):
+                        name = (
+                            member.name
+                            if member.name
+                            else self.contacts.get(member.wxid, "")
+                        )
+                        room_members[member.wxid]["display_name"] = name
+
+                # 补充返回到 self.rooms
+                self.rooms[room_id]["member_list"] = room_members
+                logger.info(f"======>room_id:{room_id} {room['nickname']}")
+            save_json_to_file(self.directory, self.rooms, "wcferry_rooms.json")
+            # 将结果保存到json文件中
+            # save_json_to_file(directory, result, "wcferry_room_members.json")
+
+        thread = threading.Thread(target=fun_proc)
+
+    # thread.start()
 
     def startup(self):
         logger.info("等待登录······")
         login_info = wcf.get_user_info()
         self.contacts = self.getAllContacts()
-        directory = os.path.join(os.getcwd(), "tmp")
-        self.rooms = self.getAllrooms()
+        self.rooms = load_json_from_file(self.directory, "wcferry_rooms.json")
 
-        self.rooms_ary = self.make_rooms_ary_groupx(self.rooms)
-        self.contracts_ary = self.make_contracts_ary_groupx(self.contacts)
+       # self.rooms_ary = self.make_rooms_ary_groupx(self.rooms)
+       # self.contracts_ary = self.make_contracts_ary_groupx(self.contacts)
 
-        #save_json_to_file(directory, self.contacts, "wcferry_contacts.json")
-        #save_json_to_file(directory, self.rooms, "wcferry_rooms.json")
-        # 创建一个空字典来保存结果
-        result = {}
-
-        # 遍历列表中的每个字典
-        for room_id in self.rooms:
-            room = self.rooms[room_id]
-            room_wxid = room_id
-            room_members = room["member_list"]
-            result[room_wxid] = room_members
-
-        # 将结果保存到json文件中
-        save_json_to_file(directory, result, "wcferry_room_members.json")
         self.user_id = login_info["wxid"]
         self.name = login_info["name"]
         logger.info(f"登录信息:>>>user_id:{self.user_id}>>>>>>>>name:{self.name}")
+
+        self.thread_run()
         # wcf 开始------------------------
         robot = Robot(wcf, all_msg_handler)
         logger.info(f"WeChatRobot【{__version__}】成功启动···")
@@ -197,12 +234,16 @@ class WcFerryChannel(ChatChannel):
             if plugins[plugin].enabled:
                 if plugins[plugin].namecn == "iKnowWxAPI":
                     PluginManager().instances[plugin].post_contacts_to_groupx(
-                        self.rooms_ary, self.contracts_ary
+                        self.rooms, self.contacts
                     )
                     break
         # 让机器人一直跑
         robot.keepRunningAndBlockProcess()
         # wcf 结束------------------------
+
+    def reload_conf(self):
+        robot = Robot(wcf, all_msg_handler)
+        logger.info(f"重载配置,robot.whiteListGroups长度: {len(robot.whiteListGroups)}")
 
     def handle_single(self, cmsg: ChatMessage):
         # print(cmsg)
@@ -519,16 +560,53 @@ class WcFerryChannel(ChatChannel):
 
         return result
 
+    # 获取微信群成员的昵称(nickname)或在群里的特点昵称(display_name)
+    def get_room_member_name(self, room_id, member_id):
+        if not room_id or not member_id:
+            return ""
+        member_name = ""
+        if room_id in self.rooms:
+            room = self.rooms[room_id]
+            member_list = room.get("member_list", "")
+            if member_id in member_list:
+                member = member_list[member_id]
+                member_name = member["nickname"] or member["display_name"]
+        if not member_name and member_id in self.contacts:
+            return self.contacts[member_id]["name"]
+        return member_name
+
+    def get_room_member_wxid(self, room_id, name):
+        if not room_id or not name:
+            return ""
+        if room_id in self.rooms:
+            room = self.rooms[room_id]
+            member_list = room.get("member_list", "")
+            for member_id in member_list:
+                member = member_list[member_id]
+                member_name = member.get("nickname", None)
+                if member_name and member_name == name:
+                    return member_id
+                member_name = member.get("name", None)
+                if member_name and member_name == name:
+                    return member_id
+                member_name = member.get("display_name", None)
+                if member_name and member_name == name:
+                    return member_id
+        logger.error(f"未找到群{room_id}的成员{name}")
+        return ""
+
     # 保持一些辅助性查询数组列表
     def saveOtherInfo(self):
         wcf_rooms = {}
         wcf_rooms_wxid_name = {}
         wcf_rooms_wxid = []
         wcf_rooms_name = []
-        for contact in self.contacts:
-            if contact["wxid"].endswith("chatroom"):
+
+        for wxid in self.contacts:
+            if wxid.endswith("chatroom"):
+                contact = self.contacts[wxid]
                 room_name = contact["name"]
-                wcf_rooms[contact["wxid"]] = {
+                wcf_rooms[wxid] = {
                     "name": room_name,
                     "name": contact["name"],
                     "code": contact["code"],
@@ -539,8 +617,8 @@ class WcFerryChannel(ChatChannel):
                     "gender": contact["gender"],
                 }
 
-                wcf_rooms_wxid_name[contact["wxid"]] = room_name
-                wcf_rooms_wxid.append(contact["wxid"])
+                wcf_rooms_wxid_name[wxid] = room_name
+                wcf_rooms_wxid.append(wxid)
                 if room_name:
                     wcf_rooms_name.append(room_name)
 
@@ -559,7 +637,7 @@ class WcFerryChannel(ChatChannel):
         return result
 
     def make_rooms_ary_groupx(self, rooms):
-        rooms_ary = []
+        _rooms_ary = []
         for wxid, item in rooms.items():
             nickname = item.get("nickname")
             member_list = []
@@ -571,7 +649,7 @@ class WcFerryChannel(ChatChannel):
                         "NickName": member.get("nickname"),
                     }
                 )
-            rooms_ary.append(
+            _rooms_ary.append(
                 {
                     "wxid": wxid,
                     "UserName": wxid,
@@ -579,10 +657,24 @@ class WcFerryChannel(ChatChannel):
                     "MemberList": member_list,
                 }
             )
-        return rooms_ary
+        return _rooms_ary
 
     def make_contracts_ary_groupx(self, contracts):
-        contracts_ary = []
+        _contracts_ary = []
         for wxid, member in contracts.items():
-            contracts_ary.append({"wxid": wxid, "UserName": wxid, "NickName": member['name']})
-        return contracts_ary
+            _contracts_ary.append(
+                {
+                    "alias": member.get("alias"),
+                    "wxid": wxid,
+                    "UserName": wxid,
+                    "NickName": member.get("name"),
+                    'Province': member.get("province"),
+                    "Sex":  1 if member.get("gender")=='男' else 0,
+                    'City': member.get("city"),
+                    'Country': member.get("country"),
+                    'code': member.get("code"),
+                    'Remark': member.get("remark"),
+
+                }
+            )
+        return _contracts_ary

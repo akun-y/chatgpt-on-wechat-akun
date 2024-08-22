@@ -30,7 +30,7 @@ class Robot:
         logger.warning("未配置模型")
         self.chat = None
         self.whiteListGroups = conf().get("group_name_white_list", [])
-
+        logger.info(f"======>接收消息群白名单,加入:{len(self.whiteListGroups)}")    
         logger.info(f"已选择: {self.chat}")
         
 
@@ -73,7 +73,11 @@ class Robot:
         else:
             logger.error(f"无法从 ChatGPT 获得答案")
             return False
-
+    def shorten_text(self,text, max_length=20):
+        if len(text) <= max_length:
+            return text
+        else:
+            return text[:max_length-3] + "..."
     def processMsg(self, msg: WxMsg) -> None:
         """当接收到消息的时候，会调用本方法。如果不实现本方法，则打印原始消息。
         此处可进行自定义发送的内容,如通过 msg.content 关键字自动获取当前天气信息，并发送到对应的群组@发送者
@@ -87,7 +91,7 @@ class Robot:
         if msg.from_group():
             # 如果在群里被 @
             if msg.roomid not in self.whiteListGroups:  # 不在配置的响应的群列表里，忽略
-                # print(f"不在群列表---->,msg.roomid = {msg.roomid} - {msg.content}")
+                logger.info(f"===>不在群列表,{msg.roomid} - {self.shorten_text(msg.content)}")
                 return
             # 进入消息处理函数
             self.msgHandler(self.wcf, msg)

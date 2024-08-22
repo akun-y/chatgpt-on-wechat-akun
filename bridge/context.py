@@ -27,7 +27,11 @@ class ContextType(Enum):
     PATPAT = 21  # 拍了拍
     FUNCTION = 22  # 函数调用
     MP_LINK =23  # 公众号推文
-
+    RE_CALL=30 # 消息撤回
+    STICK_TOP = 31 #置顶消息
+    UNSTICK_TOP = 32 #取消置顶消息
+    RECEIVE_RED_PACKET=33  # 收到红包
+    GROUP_INVITE_CONFIRM_OPEN=34 # 打开群邀请确认
 
     def __str__(self):
         return self.name

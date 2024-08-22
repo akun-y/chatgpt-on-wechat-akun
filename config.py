@@ -188,12 +188,16 @@ available_setting = {
     "Minimax_api_key": "",
     "Minimax_group_id": "",
     "Minimax_base_url": "",
-    "groupx_url": "https://groupx.mfull.cn",
+
     "bot_account": "bot",
     "bot_name": "扁鹊子",
     "system_name": "iKnow-on-wechat",
     "iknow_reg_url": "http://192.168.15.223:8080/#pages/reg",
     "iknow_recharge_url": "http://192.168.15.223:8080/#pages/recharge",
+    
+    "groupx_url": "https://groupx.mfull.cn",
+    "groupx_username":"",
+    "groupx_password":""
 }
 
 

@@ -11,7 +11,6 @@ os.environ['ntchat_LOG'] = "ERROR"
 from wcferry import Wcf
 
 wcf = Wcf(debug=False)
-LOG = logging.getLogger("wcferry")
 
 def forever():
     try:
