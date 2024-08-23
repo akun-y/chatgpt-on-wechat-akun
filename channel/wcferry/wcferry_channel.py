@@ -243,7 +243,7 @@ class WcFerryChannel(ChatChannel):
 
     def reload_conf(self):
         robot = Robot(wcf, all_msg_handler)
-        logger.info(f"重载配置,robot.whiteListGroups长度: {len(robot.whiteListGroups)}")
+        logger.info(f"重载wcferry robot配置,,,,")
 
     def handle_single(self, cmsg: ChatMessage):
         # print(cmsg)
@@ -304,7 +304,7 @@ class WcFerryChannel(ChatChannel):
             ContextType.EXIT_GROUP,
             ContextType.PATPAT,
         ]:
-            logger.debug("[WX]receive note msg: {}".format(cmsg.content))
+            logger.info("[WX]receive note msg: {}".format(cmsg.content))
         elif cmsg.ctype == ContextType.TEXT:
             pass
         elif cmsg.ctype == ContextType.QUOTE:

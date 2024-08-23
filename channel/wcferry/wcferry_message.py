@@ -72,10 +72,11 @@ def extrat_herf_content(text: str) -> list:
 
     matches = re.findall(pattern, text)
 
+    result = []
     for href, text in matches:
-        logger.info("extrat_herf_content Href:", href)
-        logger.info("extrat_herf_content Text:", text)
-    return matches
+        result.append(href)
+        result.append(text)
+    return result
 
 
 def ensure_file_ready(file_path, timeout=10, interval=0.5):
@@ -370,15 +371,32 @@ class WcFerryMessage(ChatMessage):
 
             self.ctype = ContextType.RE_CALL  # 撤回消息
             self.content = data.content
-        elif "removed a message from top" in data.content:
-            act_name_list = extract_quoted_content(data.content)
+        elif "移除了一条置顶消息" in data.content:
+            act_name_list = extrat_herf_content(data.content)
             self.ctype = ContextType.UNSTICK_TOP
             self.content = data.content
+            if len(act_name_list) == 2:
+                herf = act_name_list[0]
+                oper_name = act_name_list[1]
+                self.from_user_nickname = oper_name
+                self.from_user_id = self.channel.get_room_member_wxid(
+                    data.roomid, oper_name
+                )
+            logger.info(f"收到移除置顶消息:{self.content}")
+
         elif "置顶了一条消息" in data.content:
             #'"<a href="weixin://link_profile username=wxid_uc0z2quukz0w22">北高峰顶的男人</a>"置顶了一条消息'
             act_name_list = extrat_herf_content(data.content)
             self.ctype = ContextType.STICK_TOP
             self.content = data.content
+            if len(act_name_list) == 2:
+                herf = act_name_list[0]
+                oper_name = act_name_list[1]
+                self.from_user_nickname = oper_name
+                self.from_user_id = self.channel.get_room_member_wxid(
+                    data.roomid, oper_name
+                )
+            logger.info(f"收到置顶消息:{self.content}")
         elif "收到红包" in data.content:
             self.ctype = ContextType.RECEIVE_RED_PACKET
             self.content = data.content
@@ -406,8 +424,13 @@ class WcFerryMessage(ChatMessage):
 
     def proc_quoted_wechat_msg(self, data):
         # 引用消息,视频号视频,QQ音乐,聊天记录,APP小程序,表情,微信直播,微信服务号
-        xmlContent = data.get("xml")
+        xmlContent = data.xml
+
         root = ET.XML(xmlContent)
+        msg_source = root.find("msgsource")
+
+        logger.info(f"收到微信消息(47):{msg_source}")
+
         appmsg = root.find("appmsg")
         msg = appmsg.find("title")
         type = appmsg.find("type")

@@ -28,9 +28,7 @@ class Robot:
         self.msgHandler = all_msg_handler
 
         logger.warning("未配置模型")
-        self.chat = None
-        self.whiteListGroups = conf().get("group_name_white_list", [])
-        logger.info(f"======>接收消息群白名单,加入:{len(self.whiteListGroups)}")    
+        self.chat = None   
         logger.info(f"已选择: {self.chat}")
         
 
@@ -88,11 +86,7 @@ class Robot:
         """
 
         # 群聊消息
-        if msg.from_group():
-            # 如果在群里被 @
-            if msg.roomid not in self.whiteListGroups:  # 不在配置的响应的群列表里，忽略
-                logger.info(f"===>不在群列表,{msg.roomid} - {self.shorten_text(msg.content)}")
-                return
+        if msg.from_group():           
             # 进入消息处理函数
             self.msgHandler(self.wcf, msg)
             return  # 处理完群聊信息，后面就不需要处理了
