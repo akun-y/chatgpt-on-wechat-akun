@@ -180,6 +180,7 @@ class WcFerryChannel(ChatChannel):
                     continue
 
                 for member in crd.members:
+                    logger.info(f"======>member:{member}")
                     if not room_members[member.wxid].get("display_name"):
                         name = (
                             member.name
@@ -349,15 +350,6 @@ class WcFerryChannel(ChatChannel):
             image_path = download_and_compress_image(img_url, filename)
             wcf.send_image(image_path, receiver)
             logger.info("[WX] sendImage url={}, receiver={}".format(img_url, receiver))
-        elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
-            wcf.send_image(reply.content, receiver)
-            logger.info("[WX] sendImage, receiver={}".format(receiver))
-        elif reply.type == ReplyType.VIDEO:  # 发送文件
-            wcf.send_video(reply.content, receiver)
-            logger.info("[WX] sendFile={}, receiver={}".format(reply.content, receiver))
-        elif reply.type == ReplyType.FILE:  # 发送文件
-            wcf.send_file(reply.content, receiver)
-            logger.info("[WX] sendFile={}, receiver={}".format(reply.content, receiver))
         elif reply.type == ReplyType.VIDEO_URL:
             video_url = reply.content
             filename = str(uuid.uuid4())
@@ -367,8 +359,18 @@ class WcFerryChannel(ChatChannel):
                 # 如果视频太大，下载可能会被跳过，此时 video_path 将为 None
                 wcf.send_text("抱歉，视频太大了！！！", receiver)
             else:
-                wcf.send_video(video_path, receiver)
+                wcf.send_file(video_path, receiver)
             logger.info("[WX] sendVideo, receiver={}".format(receiver))
+        elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
+            wcf.send_image(reply.content, receiver)
+            logger.info("[WX] sendImage, receiver={}".format(receiver))
+        elif reply.type == ReplyType.VIDEO:  # 发送文件
+            wcf.send_video(reply.content, receiver)
+            logger.info("[WX] sendFile={}, receiver={}".format(reply.content, receiver))
+        elif reply.type == ReplyType.FILE:  # 发送文件
+            wcf.send_file(reply.content, receiver)
+            logger.info("[WX] sendFile={}, receiver={}".format(reply.content, receiver))
+
         elif reply.type == ReplyType.CARD:
             wcf.send_card(reply.content, receiver)
             logger.info("[WX] sendCARD={}, receiver={}".format(reply.content, receiver))
@@ -592,7 +594,7 @@ class WcFerryChannel(ChatChannel):
                 member_name = member.get("display_name", None)
                 if member_name and member_name == name:
                     return member_id
-        logger.error(f"未找到群{room_id}的成员{name}")
+        logger.error(f"未找到群:{room_id}的成员{name}")
         return ""
 
     # 保持一些辅助性查询数组列表

@@ -86,7 +86,9 @@ class Robot:
         """
 
         # 群聊消息
-        if msg.from_group():           
+        if msg.from_group():         
+            if msg.from_self():
+                logger.info(f"===>自己发出(群聊):{msg.roomid}-{msg.content}")  
             # 进入消息处理函数
             self.msgHandler(self.wcf, msg)
             return  # 处理完群聊信息，后面就不需要处理了
@@ -101,6 +103,7 @@ class Robot:
         elif msg.type == 0x01:  # 文本消息
             # 让配置加载更灵活，自己可以更新配置。也可以利用定时任务更新。
             if msg.from_self():
+                logger.info(f"===>自己发出(私聊): {msg.content}")
                 if msg.content == "^更新$":
                     #  self.config.reload()
                     load_config()

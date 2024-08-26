@@ -366,8 +366,9 @@ class WcFerryMessage(ChatMessage):
                 self.actual_user_id = self.channel.get_room_member_wxid(
                     data.roomid, name
                 )
-                self.from_user_id = self.actual_user_id
-                self.from_user_nickname = self.actual_user_nickname
+                if self.actual_user_id:
+                    self.from_user_id = self.actual_user_id
+                    self.from_user_nickname = self.actual_user_nickname
 
             self.ctype = ContextType.RE_CALL  # 撤回消息
             self.content = data.content
@@ -404,6 +405,23 @@ class WcFerryMessage(ChatMessage):
             act_name_list = extract_quoted_content(data.content)
             self.ctype = ContextType.GROUP_INVITE_CONFIRM_OPEN
             self.content = data.content
+        elif "已成为新群主" in data.content:
+            act_name_list = extract_quoted_content(data.content)
+            self.ctype = ContextType.GROUP_INVITE_CONFIRM_OPEN
+            self.content = data.content
+        elif "<videomsg" in data.content and "<msg>" in data.content:
+            #视频信息
+            act_name_list = extract_quoted_content(data.content)
+            self.ctype = ContextType.GROUP_INVITE_CONFIRM_OPEN
+            self.content = data.content
+        elif "群收款消息" in data.content:
+            act_name_list = extract_quoted_content(data.content)
+            self.ctype = ContextType.GROUP_INVITE_CONFIRM_OPEN
+            self.content = data.content
+        elif "从群管理员中被移除" in data.content:
+            act_name_list = extract_quoted_content(data.content)
+            self.ctype = ContextType.GROUP_INVITE_CONFIRM_OPEN
+            self.content = data.content
         else:  # 退群,踢掉
             act_name_list = extract_quoted_content(data.content)
             if act_name_list:
@@ -432,6 +450,8 @@ class WcFerryMessage(ChatMessage):
         logger.info(f"收到微信消息(47):{msg_source}")
 
         appmsg = root.find("appmsg")
+        if not appmsg:
+            return
         msg = appmsg.find("title")
         type = appmsg.find("type")
         if type.text == "51":  # 视频号视频
