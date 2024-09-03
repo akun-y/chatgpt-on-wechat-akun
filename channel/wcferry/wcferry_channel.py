@@ -197,14 +197,15 @@ class WcFerryChannel(ChatChannel):
             # save_json_to_file(directory, result, "wcferry_room_members.json")
 
         thread = threading.Thread(target=fun_proc)
-
-    # thread.start()
+        thread.start()
 
     def startup(self):
         logger.info("等待登录······")
         login_info = wcf.get_user_info()
         self.contacts = self.getAllContacts()
         self.rooms = load_json_from_file(self.directory, "wcferry_rooms.json")
+        if not self.rooms:
+            self.rooms = self.getAllrooms()
 
        # self.rooms_ary = self.make_rooms_ary_groupx(self.rooms)
        # self.contracts_ary = self.make_contracts_ary_groupx(self.contacts)

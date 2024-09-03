@@ -422,7 +422,15 @@ class WcFerryMessage(ChatMessage):
             act_name_list = extract_quoted_content(data.content)
             self.ctype = ContextType.GROUP_INVITE_CONFIRM_OPEN
             self.content = data.content
-        else:  # 退群,踢掉
+        elif "该类型文件可能存在安全风险" in data.content:
+            act_name_list = extract_quoted_content(data.content)
+            self.ctype = ContextType.GROUP_INVITE_CONFIRM_OPEN
+            self.content = data.content
+        elif "被添加为群管理员" in data.content:
+            act_name_list = extract_quoted_content(data.content)
+            self.ctype = ContextType.GROUP_INVITE_CONFIRM_OPEN
+            self.content = data.content
+        else:  # 未知
             act_name_list = extract_quoted_content(data.content)
             if act_name_list:
                 name = act_name_list[0]
@@ -432,13 +440,14 @@ class WcFerryMessage(ChatMessage):
                 )
                 self.from_user_id = self.actual_user_id
                 self.from_user_nickname = self.actual_user_nickname
-            self.ctype = ContextType.LEAVE_GROUP
-            self.content = f"{self.actual_user_nickname}退出了群聊！"
-            # 动态删除群成员
-            members = self.rooms[data.roomid]["member_list"]
-            if members and self.actual_user_id in members:
-                members.remove(self.actual_user_id)
-                self.rooms[data.roomid]["member_list"] = members
+                logger.info(f"收到未知消息:{self.content}")
+            # self.ctype = ContextType.LEAVE_GROUP
+            # self.content = f"{self.actual_user_nickname}退出了群聊！"
+            # # 动态删除群成员
+            # members = self.rooms[data.roomid]["member_list"]
+            # if members and self.actual_user_id in members:
+            #     members.remove(self.actual_user_id)
+            #     self.rooms[data.roomid]["member_list"] = members
 
     def proc_quoted_wechat_msg(self, data):
         # 引用消息,视频号视频,QQ音乐,聊天记录,APP小程序,表情,微信直播,微信服务号
