@@ -149,6 +149,26 @@ class WcFerryChannel(ChatChannel):
         self.contracts_global = {}
         self.directory = os.path.join(os.getcwd(), "tmp")
 
+    def merge_rooms(self, rooms1, rooms2):
+        merged_rooms = rooms1.copy()  # Start with a copy of rooms1
+
+        for room_id, room_data in rooms2.items():
+            if room_id in merged_rooms:
+                # Merge existing room data
+                merged_rooms[room_id] = {
+                    **merged_rooms[room_id],
+                    **room_data,
+                    'member_list': {
+                        **merged_rooms[room_id].get('member_list', {}),
+                        **room_data.get('member_list', {})
+                    }
+                }
+            else:
+                # Add new room data
+                merged_rooms[room_id] = room_data
+
+        return merged_rooms
+
     def thread_run(self):
         def fun_proc():
             time.sleep(5)
@@ -156,6 +176,10 @@ class WcFerryChannel(ChatChannel):
 
             save_json_to_file(self.directory, self.contacts, "wcferry_contacts.json")
 
+            # 合并微信群信息
+            new_rooms = self.getAllrooms()
+            if new_rooms:
+                self.rooms = self.merge_rooms(self.rooms, new_rooms)
             # 遍历列表中的每个字典
             for room_id in self.rooms:
                 room = self.rooms[room_id]
