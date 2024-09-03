@@ -180,45 +180,8 @@ class WcFerryChannel(ChatChannel):
             new_rooms = self.getAllrooms()
             if new_rooms:
                 self.rooms = self.merge_rooms(self.rooms, new_rooms)
-            # 遍历列表中的每个字典
-            for room_id in self.rooms:
-                room = self.rooms[room_id]
-                # 该变量一般只有display_name或者 nickname 和 display_name 都没有
-                room_members = room["member_list"]
-
-                # 必定包括所有成员的display_name
-                crs = wcf.query_sql(
-                    "MicroMsg.db",
-                    f"SELECT RoomData FROM ChatRoom WHERE ChatRoomName = '{room_id}';",
-                )
-                if not crs:
-                    continue
-
-                bs = crs[0].get("RoomData")
-                if not bs:
-                    continue
-
-                crd = RoomData()
-                crd.ParseFromString(bs)
-                if not bs:
-                    continue
-
-                for member in crd.members:
-                    logger.info(f"======>member:{member}")
-                    if not room_members[member.wxid].get("display_name"):
-                        name = (
-                            member.name
-                            if member.name
-                            else self.contacts.get(member.wxid, "")
-                        )
-                        room_members[member.wxid]["display_name"] = name
-
-                # 补充返回到 self.rooms
-                self.rooms[room_id]["member_list"] = room_members
-                logger.info(f"======>room_id:{room_id} {room['nickname']}")
+            
             save_json_to_file(self.directory, self.rooms, "wcferry_rooms.json")
-            # 将结果保存到json文件中
-            # save_json_to_file(directory, result, "wcferry_room_members.json")
 
         thread = threading.Thread(target=fun_proc)
         thread.start()
