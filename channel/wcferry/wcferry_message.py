@@ -135,16 +135,19 @@ class WcFerryMessage(ChatMessage):
             self.from_user_id = data.sender
 
             if self.is_group:
-                self.from_user_nickname = self.channel.get_room_member_name(
+                self.actual_user_nickname = self.channel.get_room_member_name(
                     data.roomid, data.sender
                 )
+                self.actual_user_id = data.sender
+                self.from_user_nickname = contracts[data.roomid]['name'] if contracts[data.roomid] else ''
+                self.from_user_id = data.roomid
             else:
                 self.from_user_nickname = contracts.get(data.sender, {}).get("name", "")
 
             self.to_user_id = self.user_id
             self.to_user_nickname = self.nickname
-            self.other_user_nickname = self.from_user_nickname
-            self.other_user_id = self.from_user_id
+            self.other_user_nickname = self.actual_user_nickname
+            self.other_user_id = self.actual_user_id
             # print(wechat_msg)  ##重要，检查type数字类型，查看xml内容参数时用
             if wechat_msg.type == 1:  # 文本消息类型
                 if "gh_" in self.other_user_id:
@@ -273,8 +276,8 @@ class WcFerryMessage(ChatMessage):
                     content = data.content or ""
                     pattern = f"@{re.escape(self.nickname)}(\u2005|\u0020)"
                     self.is_at |= bool(re.search(pattern, content))
-                    self.actual_user_id = self.from_user_id
-                    self.actual_user_nickname = self.from_user_nickname
+                    #self.actual_user_id = self.from_user_id
+                    #self.actual_user_nickname = self.from_user_nickname
 
                 else:
                     logger.error(
