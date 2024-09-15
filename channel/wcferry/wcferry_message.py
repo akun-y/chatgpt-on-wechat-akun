@@ -143,6 +143,8 @@ class WcFerryMessage(ChatMessage):
                 self.from_user_id = data.roomid
             else:
                 self.from_user_nickname = contracts.get(data.sender, {}).get("name", "")
+                self.actual_user_id =self.from_user_id
+                self.actual_user_nickname = self.from_user_nickname
 
             self.to_user_id = self.user_id
             self.to_user_nickname = self.nickname
