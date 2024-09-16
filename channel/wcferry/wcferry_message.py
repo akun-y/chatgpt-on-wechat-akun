@@ -38,9 +38,8 @@ def get_emoji_file(xmlContent):
     if url is None or filename is None:
         path = "发送了一张本地图片"
     else:
-        root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..\.."))
         # 将表情下载到emoji文件夹下
-        path = os.path.join(root_dir, "tmp", "emoj", filename)
+        path = os.path.join(os.getcwd(), "tmp", "emoj", filename)
         if not os.path.exists(path):
             urllib.request.urlretrieve(url, path)
             exist = False
@@ -130,7 +129,7 @@ class WcFerryMessage(ChatMessage):
 
             self.tmp_dir = os.path.join(os.getcwd(), "tmp")
             # 从文件读取数据，并构建以 wxid 为键的字典
-            contracts = self.channel.contacts
+            #contracts = self.channel.contacts
             data = wechat_msg
             self.from_user_id = data.sender
 
@@ -139,17 +138,18 @@ class WcFerryMessage(ChatMessage):
                     data.roomid, data.sender
                 )
                 self.actual_user_id = data.sender
-                self.from_user_nickname = contracts[data.roomid]['name'] if contracts[data.roomid] else ''
+                self.from_user_nickname = self.channel.get_room_name(data.roomid)
                 self.from_user_id = data.roomid
+                
+                self.other_user_nickname = self.from_user_nickname
+                self.other_user_id = data.roomid
             else:
-                self.from_user_nickname = contracts.get(data.sender, {}).get("name", "")
+                self.from_user_nickname = self.channel.get_user_name(data.sender)
                 self.actual_user_id =self.from_user_id
                 self.actual_user_nickname = self.from_user_nickname
 
             self.to_user_id = self.user_id
             self.to_user_nickname = self.nickname
-            self.other_user_nickname = self.actual_user_nickname
-            self.other_user_id = self.actual_user_id
             # print(wechat_msg)  ##重要，检查type数字类型，查看xml内容参数时用
             if wechat_msg.type == 1:  # 文本消息类型
                 if "gh_" in self.other_user_id:
@@ -190,7 +190,7 @@ class WcFerryMessage(ChatMessage):
                 self.content = data.content
                 self._prepare_fn = lambda: None
                 if self.is_group:
-                    self.from_user_nickname = self.channel.contacts[data.roomid]["name"]
+                    self.from_user_nickname = self.channel.get_room_name(data.roomid)
                     # room_members = load_json_from_file(
                     #     directory, "wcferry_room_members.json"
                     # )
@@ -268,18 +268,22 @@ class WcFerryMessage(ChatMessage):
 
             if self.is_group:
                 # 群名
-                self.other_user_nickname = self.channel.contacts.get(
-                    data.roomid, {}
-                ).get("name", "")
+                self.other_user_nickname = self.channel.get_room_name(data.roomid)
                 self.other_user_id = data.roomid
                 if self.from_user_id:
-                    at_list = []
-                    self.is_at = self.user_id in at_list
+                    #room_info = get_room_info(wework=wework, conversation_id=conversation_id)
+                    
+                    #at_list = data.get('at_list', [])
+
+                    #self.is_at = self.user_id in at_list
                     content = data.content or ""
                     pattern = f"@{re.escape(self.nickname)}(\u2005|\u0020)"
                     self.is_at |= bool(re.search(pattern, content))
-                    #self.actual_user_id = self.from_user_id
-                    #self.actual_user_nickname = self.from_user_nickname
+
+                    # bot在该群众的别名
+                    user_name_in_group = self.channel.get_room_member_name(data.roomid,self.user_id)
+                    pattern = f"@{re.escape(user_name_in_group)}(\u2005|\u0020)"
+                    self.is_at |= bool(re.search(pattern, content))
 
                 else:
                     logger.error(
@@ -294,10 +298,7 @@ class WcFerryMessage(ChatMessage):
             raise e
 
     def proc_sys_wechat_msg(self, data):
-        self.actual_user_nickname = self.channel.contacts.get(
-            self.from_user_id, {}
-        ).get("name", "")
-
+        self.actual_user_nickname = self.channel.get_user_name(            self.from_user_id        )
         if "拍了拍" in data.content:
             self.ctype = ContextType.PATPAT
             self.content = data.content
@@ -509,9 +510,7 @@ class WcFerryMessage(ChatMessage):
                     # self.actual_user_nickname = get_display_name_or_nickname(
                     #     room_members, data.roomid, self.from_user_id
                     # )
-                    self.actual_user_nickname = self.channel.contacts.get(
-                        self.from_user_id, {}
-                    ).get("name", "")
+                    self.actual_user_nickname = self.channel.get_user_name(self.from_user_ids)
                     self.content = msg.text
                     self.to_user_id = refwxid.text
                     self.ctype = ContextType.QUOTE

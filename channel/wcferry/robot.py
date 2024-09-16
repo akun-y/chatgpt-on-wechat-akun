@@ -160,7 +160,7 @@ class Robot:
 
         # {msg}{ats} 表示要发送的消息内容后面紧跟@，例如 北京天气情况为：xxx @张三
         if ats == "":
-            logger.info(f"To {receiver}: {msg}")
+            #logger.info(f"To {receiver}: {msg}")
             self.wcf.send_text(f"{msg}", receiver, at_list)
         else:
             logger.info(f"To {receiver}: {ats}\r{msg}")

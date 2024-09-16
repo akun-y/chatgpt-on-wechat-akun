@@ -174,7 +174,7 @@ class WcFerryChannel(ChatChannel):
             time.sleep(5)
             self.saveOtherInfo()
 
-            save_json_to_file(self.directory, self.contacts, "wcferry_contacts.json")
+            save_json_to_file(self.directory, self.__contacts, "wcferry_contacts.json")
 
             # 合并微信群信息
             new_rooms = self.getAllrooms()
@@ -189,7 +189,7 @@ class WcFerryChannel(ChatChannel):
     def startup(self):
         logger.info("等待登录······")
         login_info = wcf.get_user_info()
-        self.contacts = self.getAllContacts()
+        self.__contacts = self.getAllContacts()
         self.rooms = load_json_from_file(self.directory, "wcferry_rooms.json")
         if not self.rooms:
             self.rooms = self.getAllrooms()
@@ -223,7 +223,7 @@ class WcFerryChannel(ChatChannel):
             if plugins[plugin].enabled:
                 if plugins[plugin].namecn == "iKnowWxAPI":
                     PluginManager().instances[plugin].post_contacts_to_groupx(
-                        self.rooms, self.contacts
+                        self.rooms, self.__contacts
                     )
                     break
         # 让机器人一直跑
@@ -455,9 +455,9 @@ class WcFerryChannel(ChatChannel):
     # 从通讯录中和获取微信群,不包含微信群成员
     def getRoomsFromContracts(self) -> dict:
         rooms = {}
-        for wxid in self.contacts:
+        for wxid in self.__contacts:
             if wxid and wxid.endswith("chatroom"):
-                room = self.contacts[wxid]
+                room = self.__contacts[wxid]
                 rooms[wxid] = {
                     "name": room["name"],
                     "code": room["code"],
@@ -471,7 +471,7 @@ class WcFerryChannel(ChatChannel):
 
     # 获取微信群列表,包括微信群成员
     def getAllrooms(self) -> dict:
-        contacts = self.contacts
+        contacts = self.__contacts
         rooms = wcf.query_sql(
             "MicroMsg.db",
             "SELECT ChatRoomName,UserNameList,RoomData FROM ChatRoom LIMIT 2000;",
@@ -533,9 +533,9 @@ class WcFerryChannel(ChatChannel):
             for member in crd.members:
                 display_name = member.name
                 nickname = ""
-                if not display_name and member.wxid in self.contacts:
-                    nickname = self.contacts[member.wxid]["name"]
-                    display_name = self.contacts[member.wxid]["name"]
+                if not display_name and member.wxid in self.__contacts:
+                    nickname = self.__contacts[member.wxid]["name"]
+                    display_name = self.__contacts[member.wxid]["name"]
 
                 members[member.wxid] = {
                     "nickname": nickname,
@@ -549,8 +549,11 @@ class WcFerryChannel(ChatChannel):
             result[room["ChatRoomName"]] = chat_room_info
 
         return result
-
-    # 获取微信群成员的昵称(nickname)或在群里的特点昵称(display_name)
+    def get_room_name(self,room_id):
+        return self.__contacts.get(room_id, {}).get("name", "")
+    def get_user_name(self,user_id):
+        return self.__contacts.get(user_id, {}).get("name", "")
+    # 获取微信群成员的特定昵称(display_name)或通用昵称(nickname)
     def get_room_member_name(self, room_id, member_id):
         if not room_id or not member_id:
             return ""
@@ -560,9 +563,9 @@ class WcFerryChannel(ChatChannel):
             member_list = room.get("member_list", "")
             if member_id in member_list:
                 member = member_list[member_id]
-                member_name = member["nickname"] or member["display_name"]
-        if not member_name and member_id in self.contacts:
-            return self.contacts[member_id]["name"]
+                member_name = member["display_name"] or member["nickname"]
+        if not member_name and member_id in self.__contacts:
+            return self.__contacts[member_id]["name"]
         return member_name
 
     def get_room_member_wxid(self, room_id, name):
@@ -592,9 +595,9 @@ class WcFerryChannel(ChatChannel):
         wcf_rooms_wxid = []
         wcf_rooms_name = []
 
-        for wxid in self.contacts:
+        for wxid in self.__contacts:
             if wxid.endswith("chatroom"):
-                contact = self.contacts[wxid]
+                contact = self.__contacts[wxid]
                 room_name = contact["name"]
                 wcf_rooms[wxid] = {
                     "name": room_name,
