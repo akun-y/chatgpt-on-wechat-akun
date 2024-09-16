@@ -147,6 +147,9 @@ class WcFerryMessage(ChatMessage):
                 self.from_user_nickname = self.channel.get_user_name(data.sender)
                 self.actual_user_id =self.from_user_id
                 self.actual_user_nickname = self.from_user_nickname
+                
+                self.other_user_nickname = self.from_user_nickname
+                self.other_user_id = self.from_user_id
 
             self.to_user_id = self.user_id
             self.to_user_nickname = self.nickname
