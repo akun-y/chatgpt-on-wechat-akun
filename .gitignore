@@ -49,3 +49,7 @@ plugins/godcmd/godcmd.py
 logs/
 images/
 tmp/
+head-img/None.png
+head-img/summary_img.png
+head-img/*
+merged-xxxx.jpg

@@ -6,6 +6,7 @@ import time
 from asyncio import CancelledError
 from concurrent.futures import Future, ThreadPoolExecutor
 
+
 from bridge.context import *
 from bridge.reply import *
 from channel.channel import Channel
@@ -87,7 +88,7 @@ class ChatChannel(Channel):
             else:
                 context["session_id"] = cmsg.other_user_id
                 context["receiver"] = cmsg.other_user_id
-
+            
             logger.debug(f"最终的会话ID：{context['session_id']}")
             logger.debug(f"最终的接收者ID：{context['receiver']}")
             e_context = PluginManager().emit_event(
