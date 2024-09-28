@@ -1,5 +1,6 @@
 # encoding:utf-8
 
+from channel.chat_message import ChatMessage
 import plugins
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
@@ -25,6 +26,8 @@ class Finish(Plugin):
     def on_handle_context(self, e_context: EventContext):
         if e_context["context"].type != ContextType.TEXT:
             return
+        
+        msg: ChatMessage = e_context["context"]["msg"]
 
         content = e_context["context"].content
         logger.debug("[Finish] on_handle_context. content: %s" % content)
@@ -35,6 +38,7 @@ class Finish(Plugin):
             reply.content = "未知插件命令\n查看插件命令列表请输入#help 插件名\n"
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
-
+        if not msg.is_at and msg.is_group:
+            e_context.action = EventAction.BREAK_PASS
     def get_help_text(self, **kwargs):
         return ""
