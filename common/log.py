@@ -42,7 +42,9 @@ def warn(*args, **kwargs):
 logger.warn = warn
 
 # 示例日志记录
-logger.info("这是一个信息日志")
-logger.error("这是一个错误日志")
-logger.warning('This is a warning message')
-logger.warn('This is another warning message')  # 使用别名记录警告日志
+# logger.info("这是一个信息日志")
+# logger.error("这是一个错误日志")
+# logger.warning('This is a warning message')
+# logger.warn('This is another warning message')  # 使用别名记录警告日志
+
+logger = logger

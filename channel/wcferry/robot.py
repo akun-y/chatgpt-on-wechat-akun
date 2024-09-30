@@ -176,22 +176,6 @@ class Robot:
         )
         return {contact["UserName"]: contact["NickName"] for contact in contacts}
 
-    def keepRunningAndBlockProcess(self) -> None:
-        """
-        保持机器人运行，不让进程退出
-        """
-        try:
-            while True:
-                # self.runPendingJobs()
-                time.sleep(1)
-        except KeyboardInterrupt:
-            self.wcf.cleanup()  # 退出前清理环境
-            exit(0)
-            os._exit(0)
-            # sys.exit(0)
-
-
-
     def autoAcceptFriendRequest(self, msg: WxMsg) -> None:
         try:
             xml = ET.fromstring(msg.content)

@@ -328,27 +328,27 @@ class WcFerryMessage(ChatMessage):
                 f"【{self.actual_user_nickname}】 ID:{self.actual_user_id}  拍了拍了 【{self.to_user_nickname}】 ID:{self.to_user_id} "
             )
 
-        elif "加入" in data.content:
+        elif "加入了群聊" in data.content:
             names = extract_quoted_content(data.content)
             if names:
                 if len(names) == 2:
                     self.actual_user_id = self.channel.get_room_member_wxid(
                         data.roomid, names[0]
-                    )
+                    ) or self.channel.get_user_wxid_by_name(names[0])
                     self.actual_user_nickname = names[0]
                     self.from_user_id = self.actual_user_id
                     self.from_user_nickname = self.actual_user_nickname
 
                     self.to_user_id = self.channel.get_room_member_wxid(
                         data.roomid, names[1]
-                    )
+                    ) or self.channel.get_user_wxid_by_name(names[1])
                     self.to_user_nickname = names[1]
                 elif len(names) == 1:
                     name = names[0]
                     self.actual_user_nickname = name
                     self.actual_user_id = self.channel.get_room_member_wxid(
                         data.roomid, name
-                    )
+                    ) or self.channel.get_user_wxid_by_name(name)
 
             self.ctype = ContextType.JOIN_GROUP
             self.content = data.content
@@ -361,7 +361,7 @@ class WcFerryMessage(ChatMessage):
                 self.actual_user_nickname = name
                 self.actual_user_id = self.channel.get_room_member_wxid(
                     data.roomid, name
-                )
+                ) or self.channel.get_user_wxid_by_name(name)
                 self.from_user_id = self.actual_user_id
                 self.from_user_nickname = self.actual_user_nickname
 
@@ -374,7 +374,7 @@ class WcFerryMessage(ChatMessage):
                 self.actual_user_nickname = name
                 self.actual_user_id = self.channel.get_room_member_wxid(
                     data.roomid, name
-                )
+                ) or self.channel.get_user_wxid_by_name(name)
                 if self.actual_user_id:
                     self.from_user_id = self.actual_user_id
                     self.from_user_nickname = self.actual_user_nickname
@@ -391,7 +391,7 @@ class WcFerryMessage(ChatMessage):
                 self.from_user_nickname = oper_name
                 self.from_user_id = self.channel.get_room_member_wxid(
                     data.roomid, oper_name
-                )
+                ) or self.channel.get_user_wxid_by_name(oper_name)
             logger.info(f"收到移除置顶消息:{self.content}")
 
         elif "置顶了一条消息" in data.content:
@@ -405,7 +405,7 @@ class WcFerryMessage(ChatMessage):
                 self.from_user_nickname = oper_name
                 self.from_user_id = self.channel.get_room_member_wxid(
                     data.roomid, oper_name
-                )
+                ) or self.channel.get_user_wxid_by_name(oper_name)
             logger.info(f"收到置顶消息:{self.content}")
         elif "收到红包" in data.content:
             self.ctype = ContextType.RECEIVE_RED_PACKET
@@ -446,7 +446,7 @@ class WcFerryMessage(ChatMessage):
                 self.actual_user_nickname = name
                 self.actual_user_id = self.channel.get_room_member_wxid(
                     data.roomid, name
-                )
+                ) or self.channel.get_user_wxid_by_name(name)
                 self.from_user_id = self.actual_user_id
                 self.from_user_nickname = self.actual_user_nickname
                 logger.info(f"收到未知消息:{self.content}")

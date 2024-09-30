@@ -234,7 +234,7 @@ class WcFerryChannel(ChatChannel):
                     )
                     break
         # 让机器人一直跑
-        robot.keepRunningAndBlockProcess()
+        forever()
         # wcf 结束------------------------
 
     def reload_conf(self):
@@ -563,6 +563,11 @@ class WcFerryChannel(ChatChannel):
         return result
     def get_room_name(self,room_id):
         return self.contacts.get(room_id, {}).get("name", "")
+    def get_user_wxid_by_name   (self,user_name):
+        for wxid, contact in self.contacts.items():
+            if contact.get("name") == user_name:
+                return wxid
+        return None
     def get_user_name(self,user_id):
         return self.contacts.get(user_id, {}).get("name", "")
     def get_user_avatar_url(self,user_id):
