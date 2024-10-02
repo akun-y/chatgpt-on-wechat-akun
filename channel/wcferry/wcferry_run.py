@@ -12,26 +12,18 @@ from wcferry import Wcf
 
 wcf = Wcf(debug=False)
 
-# 全局标志位
-global running
-running = True
-def cleanup():
-    # 这里可以执行任何清理工作
-    print("Cleaning up...")
-    wcf.cleanup()  # 退出前清理环境
-    #exit(0)
-    os._exit(0)
-    # sys.exit(0)
-
 
 def forever():
-    global running
     try:
-        while running:
+        while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        running = False  # 退出循环的标志
-    cleanup()
+        # 这里可以执行任何清理工作
+        print("Cleaning up...")
+        wcf.cleanup()  # 退出前清理环境
+        # exit(0)
+        os._exit(0)
+        # sys.exit(0)
 
 
 # 专用于保存联系人,群聊,群成员信息
@@ -46,7 +38,7 @@ def save_json_to_file(directory, contacts, filename):
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(contacts, f, ensure_ascii=False, indent=4)
 
-        logger.info(f"Successfully saved to {file_path}")
+        logger.info(f"json saved to {file_path}")
 
     except Exception as e:
         logger.error(f"Failed to write to file: {e}")
