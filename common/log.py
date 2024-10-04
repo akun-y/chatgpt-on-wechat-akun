@@ -29,7 +29,7 @@ logger.add(
 logger.add(
     "logs/err_{time:YYYY-MM-DD}.log",
     level="ERROR",
-    format="[{level}][{time:YYYY-MM-DD HH:mm:ss}] - {message} [{file}:{line}]",
+    format="[{level}][{time:YYYY-MM-DD HH:mm:ss}] {message} [{file}:{line}]",
     rotation="1 day",  # 每天午夜轮换日志文件
     encoding="utf-8"
 )

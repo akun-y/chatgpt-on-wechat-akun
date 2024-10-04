@@ -145,9 +145,10 @@ class WcFerryChannel(ChatChannel):
     def __init__(self):
         super().__init__()
 
-       # self.rooms_ary = []
+        # self.rooms_ary = []
         self.contracts_global = {}
         self.directory = os.path.join(os.getcwd(), "tmp")
+
     # def _compose_context(self, ctype: ContextType, content, **kwargs):
     #     context =super()._compose_context(ctype, content, **kwargs)
     #     # context = Context(ctype, content)
@@ -162,10 +163,10 @@ class WcFerryChannel(ChatChannel):
                 merged_rooms[room_id] = {
                     **merged_rooms[room_id],
                     **room_data,
-                    'member_list': {
-                        **merged_rooms[room_id].get('member_list', {}),
-                        **room_data.get('member_list', {})
-                    }
+                    "member_list": {
+                        **merged_rooms[room_id].get("member_list", {}),
+                        **room_data.get("member_list", {}),
+                    },
                 }
             else:
                 # Add new room data
@@ -184,7 +185,7 @@ class WcFerryChannel(ChatChannel):
             new_rooms = self.getAllrooms()
             if new_rooms:
                 self.rooms = self.merge_rooms(self.rooms, new_rooms)
-            
+
             save_json_to_file(self.directory, self.rooms, "wcferry_rooms.json")
 
         thread = threading.Thread(target=fun_proc)
@@ -194,15 +195,15 @@ class WcFerryChannel(ChatChannel):
         logger.info("等待登录······")
         login_info = wcf.get_user_info()
         self.__avatar_urls = self.getAllAvatarUrl()
-        
+
         self.contacts = self.getAllContacts()
-        
+
         self.rooms = load_json_from_file(self.directory, "wcferry_rooms.json")
         if not self.rooms:
             self.rooms = self.getAllrooms()
 
-       # self.rooms_ary = self.make_rooms_ary_groupx(self.rooms)
-       # self.contracts_ary = self.make_contracts_ary_groupx(self.contacts)
+        # self.rooms_ary = self.make_rooms_ary_groupx(self.rooms)
+        # self.contracts_ary = self.make_contracts_ary_groupx(self.contacts)
 
         self.user_id = login_info["wxid"]
         self.name = login_info["name"]
@@ -414,11 +415,16 @@ class WcFerryChannel(ChatChannel):
         #         thumburl="https://inews.gtimg.com/om_bt/O6SG7dHjdG0kWNyWz6WPo2_3v6A6eAC9ThTazwlKPO1qMAA/641",
         #         receiver=receiver,
         #     )
+
     # 獲取所有用戶的頭像url
     def getAllAvatarUrl(self):
-        data = wcf.query_sql("MicroMsg.db", "SELECT usrName, bigHeadImgUrl, smallHeadImgUrl FROM ContactHeadImgUrl;");
-       
+        data = wcf.query_sql(
+            "MicroMsg.db",
+            "SELECT usrName, bigHeadImgUrl, smallHeadImgUrl FROM ContactHeadImgUrl;",
+        )
+
         return {contact["usrName"]: contact["bigHeadImgUrl"] for contact in data}
+
     # 获取通信录,包含个人及微信群
     def getAllContacts(self) -> dict:
         """
@@ -481,6 +487,34 @@ class WcFerryChannel(ChatChannel):
 
         return rooms
 
+    def getMembersFromRoomData(self, bs):
+        contacts = self.contacts
+        if bs is None:
+            return {}
+        members = {}
+
+        crd = RoomData()
+        crd.ParseFromString(bs)
+
+        for member in crd.members:
+            display_name = member.name
+            nickname = ""
+
+            contract = {}
+            if member.wxid in contacts:
+                if not display_name:
+                    display_name = contacts[member.wxid]["name"]
+                if not nickname:
+                    nickname = contacts[member.wxid]["name"]
+                contract = contacts[member.wxid]
+
+            new_item = {
+                "nickname": nickname,
+                "display_name": display_name,
+            }
+            members[member.wxid] = new_item | contract if contract else new_item
+        return members
+
     # 获取微信群列表,包括微信群成员
     def getAllrooms(self) -> dict:
         contacts = self.contacts
@@ -494,28 +528,7 @@ class WcFerryChannel(ChatChannel):
             bs = room.get("RoomData")
             if bs is None:
                 continue
-            members = {}
-
-            crd = RoomData()
-            crd.ParseFromString(bs)
-
-            for member in crd.members:
-                display_name = member.name
-                nickname = ""
-
-                contract = {}
-                if member.wxid in contacts:
-                    if not display_name:
-                        display_name = contacts[member.wxid]["name"]
-                    if not nickname:
-                        nickname = contacts[member.wxid]["name"]
-                    contract = contacts[member.wxid]
-
-                new_item = {
-                    "nickname": nickname,
-                    "display_name": display_name,
-                }
-                members[member.wxid] = new_item | contract if contract else new_item
+            members = self.getMembersFromRoomData(bs)
             room_id = room["ChatRoomName"]
             chat_room_info = {
                 "nickname": contacts[room_id]["name"],  # contracts 包含微信群
@@ -529,7 +542,7 @@ class WcFerryChannel(ChatChannel):
     def getAllroomsMembers(self) -> dict:
         rooms = wcf.query_sql(
             "MicroMsg.db",
-            "SELECT ChatRoomName,UserNameList,RoomData FROM ChatRoom LIMIT 1000;",
+            "SELECT ChatRoomName,UserNameList,RoomData FROM ChatRoom LIMIT 2000;",
         )
 
         result = {}
@@ -537,22 +550,7 @@ class WcFerryChannel(ChatChannel):
             bs = room.get("RoomData")
             if bs is None:
                 continue
-            members = {}
-
-            crd = RoomData()
-            crd.ParseFromString(bs)
-
-            for member in crd.members:
-                display_name = member.name
-                nickname = ""
-                if not display_name and member.wxid in self.contacts:
-                    nickname = self.contacts[member.wxid]["name"]
-                    display_name = self.contacts[member.wxid]["name"]
-
-                members[member.wxid] = {
-                    "nickname": nickname,
-                    "display_name": display_name,
-                }
+            members = self.getMembersFromRoomData(bs)
             room_id = room["ChatRoomName"]
             chat_room_info = {
                 "nickname": rooms[room_id]["name"],
@@ -561,18 +559,38 @@ class WcFerryChannel(ChatChannel):
             result[room["ChatRoomName"]] = chat_room_info
 
         return result
-    def get_room_name(self,room_id):
-        return self.contacts.get(room_id, {}).get("name", "")
-    def get_user_wxid_by_name   (self,user_name):
+
+    def get_user_wxid_by_name(self, user_name):
         for wxid, contact in self.contacts.items():
             if contact.get("name") == user_name:
                 return wxid
         return None
-    def get_user_name(self,user_id):
-        return self.contacts.get(user_id, {}).get("name", "")
-    def get_user_avatar_url(self,user_id):
+
+    def get_user_name(self, user_id):
+        name = self.contacts.get(user_id, {}).get("name", "")
+        if name:
+            return name
+
+        result = wcf.query_sql(
+            "MicroMsg.db", f"SELECT NickName FROM Contact WHERE UserName = '{user_id}';"
+        )
+        if result:
+            name = result[0].get("NickName")
+            if name:
+                return name
+
+        contacts = wcf.get_contacts()
+        for contact in contacts:
+            if contact.get("wxid") == user_id:
+                return contact.get("name", "")
+        return ""
+
+    def get_room_name(self, room_id):
+        return self.get_user_name(room_id)
+
+    def get_user_avatar_url(self, user_id):
         return self.__avatar_urls.get(user_id, "")
-   
+
     # 获取微信群成员的特定昵称(display_name)或通用昵称(nickname)
     def get_room_member_name(self, room_id, member_id):
         if not room_id or not member_id:
@@ -584,8 +602,23 @@ class WcFerryChannel(ChatChannel):
             if member_id in member_list:
                 member = member_list[member_id]
                 member_name = member["display_name"] or member["nickname"]
-        if not member_name and member_id in self.contacts:
-            return self.contacts[member_id]["name"]
+
+        if not member_name:
+            result = wcf.query_sql(
+                "MicroMsg.db",
+                f"SELECT ChatRoomName,UserNameList,RoomData FROM ChatRoom WHERE ChatRoomName = '{room_id}';",
+            )
+            if result:
+                bs = result[0].get("RoomData")
+                members = self.getMembersFromRoomData(bs)
+                if member_id in members:
+                    member_name = (
+                        members[member_id]["display_name"]
+                        or members[member_id]["nickname"]
+                    )
+
+        if not member_name:
+            member_name = self.get_user_name(member_id)
         return member_name
 
     def get_room_member_wxid(self, room_id, name):
@@ -605,7 +638,10 @@ class WcFerryChannel(ChatChannel):
                 member_name = member.get("display_name", None)
                 if member_name and member_name == name:
                     return member_id
-        logger.error(f"未找到群:{room_id}的成员{name}")
+        wxid = self.get_user_wxid_by_name(name)
+        if wxid:
+            return wxid
+        logger.error(f"未找到群:{room_id} 的成员:{name}")
         return ""
 
     # 保持一些辅助性查询数组列表
@@ -681,13 +717,12 @@ class WcFerryChannel(ChatChannel):
                     "wxid": wxid,
                     "UserName": wxid,
                     "NickName": member.get("name"),
-                    'Province': member.get("province"),
-                    "Sex":  1 if member.get("gender")=='男' else 0,
-                    'City': member.get("city"),
-                    'Country': member.get("country"),
-                    'code': member.get("code"),
-                    'Remark': member.get("remark"),
-
+                    "Province": member.get("province"),
+                    "Sex": 1 if member.get("gender") == "男" else 0,
+                    "City": member.get("city"),
+                    "Country": member.get("country"),
+                    "code": member.get("code"),
+                    "Remark": member.get("remark"),
                 }
             )
         return _contracts_ary
