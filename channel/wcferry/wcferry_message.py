@@ -417,7 +417,7 @@ class WcFerryMessage(ChatMessage):
 
             self.ctype = ContextType.JOIN_GROUP
             self.content = data.content
-
+            time.sleep(3) #確保群名稱已經寫入sqlite
             # save_json_to_file(directory, result, "wcferry_room_members.json")
         elif "与群里其他人都不是朋友关系" in data.content:
             names = extract_quoted_content(data.content)
