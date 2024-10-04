@@ -42,6 +42,7 @@ test
 *.db
 channel/weworktop/last_key.txt
 *.pem
+cow-test/
 
 
 
