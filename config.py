@@ -5,6 +5,7 @@ import logging
 import os
 import pickle
 import copy
+import sys
 
 from common.log import logger
 
@@ -311,8 +312,9 @@ def load_config():
                 else:
                     config[name] = value
 
-    if config.get("debug", False):
-        logger.setLevel(logging.DEBUG)
+    if config.get("debug", False):        
+        logger.remove()  # Remove the default logger
+        logger.add(sys.stderr, level="DEBUG") 
         logger.debug("[INIT] set log level to DEBUG")
 
     logger.info("[INIT] load config: {}".format(drag_sensitive(config)))

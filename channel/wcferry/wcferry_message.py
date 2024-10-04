@@ -48,6 +48,52 @@ def get_emoji_file(xmlContent):
 
     return path
 
+# 获取邀请进群人员列表
+def extract_invite_names(text: str) -> list:
+    """获取邀请进群人员列表
+
+    Args:
+        text (str): 邀请进群的文本内容
+
+    Returns:
+        list: 邀请进群人员列表
+    """
+    # 正则表达式模式，匹配不同的邀请格式
+    pattern = r'"(.*?)"邀请(?:你和)?"(.+?)"加入了群聊'
+    
+    # 使用正则表达式查找所有匹配项
+    matches = re.findall(pattern, text)
+    
+    # 初始化结果列表
+    results = []
+    
+    # 遍历所有匹配项
+    for inviter, invitees in matches:
+        # 判断invitees是否包含逗号，如果有，说明有多个被邀请者
+        if '、' in invitees:
+            # 分割多个被邀请者
+            invitees_list = invitees.split('、')
+        else:
+            invitees_list = [invitees]
+        
+        # 添加邀请人和被邀请者到结果列表
+        results.append(inviter)        
+        results.extend(invitees_list)
+    
+    return results
+
+# # 测试函数
+# texts = [
+#     '"扁鵲子"邀请你和"狮子座、会更丰富"加入了群聊',
+#     '"张三"邀请"狮子座、会更丰富"加入了群聊',
+#     '"张三"邀请"狮子座"加入了群聊',
+#     '"张三"邀请你加入了群聊',
+#     '我邀请"狮子座、会更丰富"加入了群聊'
+# ]
+
+# for text in texts:
+#     print(extract_names(text))
+
 
 # 获取双引号之间的内容
 def extract_quoted_content(text: str) -> list:
@@ -201,7 +247,20 @@ class WcFerryMessage(ChatMessage):
                     # self.from_user_nickname = get_display_name_or_nickname(
                     #     room_members, data.roomid, self.from_user_id
                     # )
-
+            elif wechat_msg.type == 48:  # 需要缓存文件的消息类型
+                #  <msg>
+                #     <location x="28.778109" y="119.887352" scale="14" label="武义县" maptype="0" poiname="武义县泉溪镇丰溪村" 
+                # poiid="nearby_17630017737957653025" buildingId="" floorName="" 
+                # poiCategoryTips="" poiBusinessHour="" 
+                # poiPhone="" 
+                # poiPriceTips="0.0" 
+                # isFromPoiList="false" adcode="" cityname="" fromusername="a6666k" />
+                # </msg>
+                self.ctype = ContextType.XML
+                xml = ET.XML(data.content)
+                location = xml.find("location")
+                self.content = location.get("label") + " " + location.get("poiname")
+                # self.content = data.extra
             elif wechat_msg.type == 49:  # 需要缓存文件的消息类型
                 self.ctype = ContextType.FILE
                 self.content = data.extra
@@ -312,7 +371,7 @@ class WcFerryMessage(ChatMessage):
             self.ctype = ContextType.PATPAT
             self.content = data.content
 
-            names = extract_quoted_content(data.content)
+            names = extract_invite_names(data.content)
             if names and len(names) == 2:
                 self.actual_user_id = self.channel.get_room_member_wxid(
                     data.roomid, names[0]
@@ -335,9 +394,9 @@ class WcFerryMessage(ChatMessage):
             )
 
         elif "加入了群聊" in data.content:
-            names = extract_quoted_content(data.content)
+            names = extract_invite_names(data.content)
             if names:
-                if len(names) == 2:
+                if len(names) >= 2:
                     self.actual_user_id = self.channel.get_room_member_wxid(
                         data.roomid, names[0]
                     ) or self.channel.get_user_wxid_by_name(names[0])

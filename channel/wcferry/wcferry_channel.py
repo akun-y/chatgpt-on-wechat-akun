@@ -530,8 +530,13 @@ class WcFerryChannel(ChatChannel):
                 continue
             members = self.getMembersFromRoomData(bs)
             room_id = room["ChatRoomName"]
+
+            if not room_id or room_id not in contacts:
+                logger.error(f"未找到群:{room_id} 的名称")
+                continue
+            nickname = contacts[room_id]["name"]
             chat_room_info = {
-                "nickname": contacts[room_id]["name"],  # contracts 包含微信群
+                "nickname": nickname,  # contracts 包含微信群
                 "member_list": members,
             }
             result[room["ChatRoomName"]] = chat_room_info
