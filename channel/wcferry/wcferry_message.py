@@ -129,7 +129,7 @@ class WcFerryMessage(ChatMessage):
 
             self.tmp_dir = os.path.join(os.getcwd(), "tmp")
             # 从文件读取数据，并构建以 wxid 为键的字典
-            #contracts = self.channel.contacts
+            # contracts = self.channel.contacts
             data = wechat_msg
             self.from_user_id = data.sender
 
@@ -139,15 +139,16 @@ class WcFerryMessage(ChatMessage):
                 )
                 self.actual_user_id = data.sender
                 self.from_user_nickname = self.channel.get_room_name(data.roomid)
+
                 self.from_user_id = data.roomid
-                
+
                 self.other_user_nickname = self.from_user_nickname
                 self.other_user_id = data.roomid
             else:
                 self.from_user_nickname = self.channel.get_user_name(data.sender)
-                self.actual_user_id =self.from_user_id
+                self.actual_user_id = self.from_user_id
                 self.actual_user_nickname = self.from_user_nickname
-                
+
                 self.other_user_nickname = self.from_user_nickname
                 self.other_user_id = self.from_user_id
 
@@ -263,6 +264,9 @@ class WcFerryMessage(ChatMessage):
             elif wechat_msg.type == 10000:  #  系统消息
                 self.proc_sys_wechat_msg(data)
             else:
+                logger.error(
+                    f"未处理的微信消息类型: Type: {wechat_msg.type} MsgType: {wechat_msg}"
+                )
                 raise NotImplementedError(
                     "Unsupported message type: Type:{} MsgType:{}".format(
                         wechat_msg.type, wechat_msg.type
@@ -274,17 +278,19 @@ class WcFerryMessage(ChatMessage):
                 self.other_user_nickname = self.channel.get_room_name(data.roomid)
                 self.other_user_id = data.roomid
                 if self.from_user_id:
-                    #room_info = get_room_info(wework=wework, conversation_id=conversation_id)
-                    
-                    #at_list = data.get('at_list', [])
+                    # room_info = get_room_info(wework=wework, conversation_id=conversation_id)
 
-                    #self.is_at = self.user_id in at_list
+                    # at_list = data.get('at_list', [])
+
+                    # self.is_at = self.user_id in at_list
                     content = data.content or ""
                     pattern = f"@{re.escape(self.nickname)}(\u2005|\u0020)"
                     self.is_at |= bool(re.search(pattern, content))
 
                     # bot在该群众的别名
-                    user_name_in_group = self.channel.get_room_member_name(data.roomid,self.user_id)
+                    user_name_in_group = self.channel.get_room_member_name(
+                        data.roomid, self.user_id
+                    )
                     pattern = f"@{re.escape(user_name_in_group)}(\u2005|\u0020)"
                     self.is_at |= bool(re.search(pattern, content))
 
@@ -301,7 +307,7 @@ class WcFerryMessage(ChatMessage):
             raise e
 
     def proc_sys_wechat_msg(self, data):
-        self.actual_user_nickname = self.channel.get_user_name(            self.from_user_id        )
+        self.actual_user_nickname = self.channel.get_user_name(self.from_user_id)
         if "拍了拍" in data.content:
             self.ctype = ContextType.PATPAT
             self.content = data.content
@@ -419,7 +425,7 @@ class WcFerryMessage(ChatMessage):
             self.ctype = ContextType.GROUP_INVITE_CONFIRM_OPEN
             self.content = data.content
         elif "<videomsg" in data.content and "<msg>" in data.content:
-            #视频信息
+            # 视频信息
             act_name_list = extract_quoted_content(data.content)
             self.ctype = ContextType.GROUP_INVITE_CONFIRM_OPEN
             self.content = data.content
@@ -513,7 +519,9 @@ class WcFerryMessage(ChatMessage):
                     # self.actual_user_nickname = get_display_name_or_nickname(
                     #     room_members, data.roomid, self.from_user_id
                     # )
-                    self.actual_user_nickname = self.channel.get_user_name(self.from_user_ids)
+                    self.actual_user_nickname = self.channel.get_user_name(
+                        self.from_user_ids
+                    )
                     self.content = msg.text
                     self.to_user_id = refwxid.text
                     self.ctype = ContextType.QUOTE

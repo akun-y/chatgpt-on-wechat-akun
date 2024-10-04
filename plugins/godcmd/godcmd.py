@@ -416,15 +416,15 @@ class Godcmd(Plugin):
                     #     elif args[0] == "关键词":
                     #         # work_mode置为5
                     #         ok, result = True, change_work_mode(5)
-                    # elif cmd == "disablep":
-                    #     if len(args) != 1:
-                    #         ok, result = False, "请提供插件名"
-                    #     else:
-                    #         ok = PluginManager().disable_plugin(args[0])
-                    #         if ok:
-                    #             result = "插件已禁用"
-                    #         else:
-                    #             result = "插件不存在"
+                    elif cmd == "disablep":
+                        if len(args) != 1:
+                            ok, result = False, "请提供插件名"
+                        else:
+                            ok = PluginManager().disable_plugin(args[0])
+                            if ok:
+                                result = "插件已禁用"
+                            else:
+                                result = "插件不存在"
 
                     elif cmd == "installp":
                         if len(args) != 1:
