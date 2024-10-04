@@ -44,7 +44,7 @@ def run_app():
         channel.startup()
     except KeyboardInterrupt:
         logger.info("KeyboardInterrupt received, exiting...")
-        sys.exit(0)
+        os._exit(0)
     except Exception as e:
         logger.error("App startup failed!")
         logger.exception(e)
