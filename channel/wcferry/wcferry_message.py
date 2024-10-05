@@ -3,6 +3,8 @@ import os
 import re
 import time
 import xml.etree.ElementTree as ET
+
+import requests
 from bridge.context import ContextType
 from channel.chat_message import ChatMessage
 from channel.wcferry.WeFerryImageDecoder import WcFerryImageDecoder
@@ -39,12 +41,33 @@ def get_emoji_file(xmlContent):
         path = "发送了一张本地图片"
     else:
         # 将表情下载到emoji文件夹下
-        path = os.path.join(os.getcwd(), "tmp", "emoj")
+        path = os.path.join(os.getcwd(), "tmp", "emoji")
         if not os.path.exists(path):
             os.makedirs(path)
         path = os.path.join(path, filename)
         if not os.path.exists(path):
-            urllib.request.urlretrieve(url, path)
+            # 下载文件并设置超时时间
+            # 发送 GET 请求
+            try:
+                # 连接在10秒后超时，读取在20秒后超时,即使设置了超时个别机器依旧会长时间无反应，导致后续无法再接收信息
+                logger.info(f"开始下载emoji文件:{url}")
+                with requests.get(url, stream=True, timeout=(10, 20)) as response:
+                    response.raise_for_status()  # 检查请求是否成功
+
+                    # 下载文件
+                    with open(path, 'wb') as file:
+                        for chunk in response.iter_content(chunk_size=8192): 
+                            if chunk:  # 过滤掉保持连接的chunk
+                                file.write(chunk)
+                print(f"EMOJI文件已下载到：{path}")
+            except requests.exceptions.HTTPError as e:
+                print(f"HTTP 错误：{e}")
+            except requests.exceptions.ConnectionError as e:
+                print(f"连接错误：{e}")
+            except requests.exceptions.Timeout as e:
+                print(f"请求超时：{e}")
+            except requests.exceptions.RequestException as e:
+                print(f"请求异常：{e}")
             exist = False
         else:
             exist = True
@@ -241,7 +264,8 @@ class WcFerryMessage(ChatMessage):
                 self.proc_quoted_wechat_msg(data)
             elif wechat_msg.type == 47:  # 需要缓存文件的消息类型---表情图片-akun
                 self.ctype = ContextType.EMOJI
-                emoji_path = get_emoji_file(data.content)
+                # 下載超時，導致所有消息沒法接收
+                #emoji_path = get_emoji_file(data.content)
                 self.content = data.content
                 self._prepare_fn = lambda: None
                 if self.is_group:
