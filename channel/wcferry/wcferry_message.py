@@ -430,7 +430,7 @@ class WcFerryMessage(ChatMessage):
                 self.from_user_id = self.actual_user_id
                 self.from_user_nickname = self.actual_user_nickname
 
-            self.ctype = ContextType.JOIN_GROUP
+            self.ctype = ContextType.JOIN_GROUP_PROMPT
             self.content = data.content
         elif "撤回了" in data.content:
             names = extract_quoted_content(data.content)

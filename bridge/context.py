@@ -32,6 +32,7 @@ class ContextType(Enum):
     UNSTICK_TOP = 32 #取消置顶消息
     RECEIVE_RED_PACKET=33  # 收到红包
     GROUP_INVITE_CONFIRM_OPEN=34 # 打开群邀请确认
+    JOIN_GROUP_PROMPT = 35  # 加入群聊
 
     def __str__(self):
         return self.name
