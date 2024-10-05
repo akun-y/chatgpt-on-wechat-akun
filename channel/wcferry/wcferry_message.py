@@ -39,7 +39,10 @@ def get_emoji_file(xmlContent):
         path = "发送了一张本地图片"
     else:
         # 将表情下载到emoji文件夹下
-        path = os.path.join(os.getcwd(), "tmp", "emoj", filename)
+        path = os.path.join(os.getcwd(), "tmp", "emoj")
+        if not os.path.exists(path):
+            os.makedirs(path)
+        path = os.path.join(path, filename)
         if not os.path.exists(path):
             urllib.request.urlretrieve(url, path)
             exist = False
@@ -47,6 +50,7 @@ def get_emoji_file(xmlContent):
             exist = True
 
     return path
+
 
 # 获取邀请进群人员列表
 def extract_invite_names(text: str) -> list:
@@ -60,27 +64,28 @@ def extract_invite_names(text: str) -> list:
     """
     # 正则表达式模式，匹配不同的邀请格式
     pattern = r'"(.*?)"邀请(?:你和)?"(.+?)"加入了群聊'
-    
+
     # 使用正则表达式查找所有匹配项
     matches = re.findall(pattern, text)
-    
+
     # 初始化结果列表
     results = []
-    
+
     # 遍历所有匹配项
     for inviter, invitees in matches:
         # 判断invitees是否包含逗号，如果有，说明有多个被邀请者
-        if '、' in invitees:
+        if "、" in invitees:
             # 分割多个被邀请者
-            invitees_list = invitees.split('、')
+            invitees_list = invitees.split("、")
         else:
             invitees_list = [invitees]
-        
+
         # 添加邀请人和被邀请者到结果列表
-        results.append(inviter)        
+        results.append(inviter)
         results.extend(invitees_list)
-    
+
     return results
+
 
 # # 测试函数
 # texts = [
@@ -249,11 +254,11 @@ class WcFerryMessage(ChatMessage):
                     # )
             elif wechat_msg.type == 48:  # 需要缓存文件的消息类型
                 #  <msg>
-                #     <location x="28.778109" y="119.887352" scale="14" label="武义县" maptype="0" poiname="武义县泉溪镇丰溪村" 
-                # poiid="nearby_17630017737957653025" buildingId="" floorName="" 
-                # poiCategoryTips="" poiBusinessHour="" 
-                # poiPhone="" 
-                # poiPriceTips="0.0" 
+                #     <location x="28.778109" y="119.887352" scale="14" label="武义县" maptype="0" poiname="武义县泉溪镇丰溪村"
+                # poiid="nearby_17630017737957653025" buildingId="" floorName=""
+                # poiCategoryTips="" poiBusinessHour=""
+                # poiPhone=""
+                # poiPriceTips="0.0"
                 # isFromPoiList="false" adcode="" cityname="" fromusername="a6666k" />
                 # </msg>
                 self.ctype = ContextType.XML
@@ -417,7 +422,7 @@ class WcFerryMessage(ChatMessage):
 
             self.ctype = ContextType.JOIN_GROUP
             self.content = data.content
-            time.sleep(3) #確保群名稱已經寫入sqlite
+            time.sleep(3)  # 確保群名稱已經寫入sqlite
             # save_json_to_file(directory, result, "wcferry_room_members.json")
         elif "移出了群聊" in data.content:
             names = extract_invite_names(data.content)
