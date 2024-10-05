@@ -419,6 +419,26 @@ class WcFerryMessage(ChatMessage):
             self.content = data.content
             time.sleep(3) #確保群名稱已經寫入sqlite
             # save_json_to_file(directory, result, "wcferry_room_members.json")
+        elif "移出了群聊" in data.content:
+            names = extract_invite_names(data.content)
+            if names:
+                if len(names) >= 2:
+                    self.actual_user_id = self.channel.get_room_member_wxid(
+                        data.roomid, names[0]
+                    ) or self.channel.get_user_wxid_by_name(names[0])
+                    self.actual_user_nickname = names[0]
+                    self.from_user_id = self.actual_user_id
+                    self.from_user_nickname = self.actual_user_nickname
+                elif len(names) == 1:
+                    name = names[0]
+                    self.actual_user_nickname = name
+                    self.actual_user_id = self.channel.get_room_member_wxid(
+                        data.roomid, name
+                    ) or self.channel.get_user_wxid_by_name(name)
+                    self.from_user_id = self.actual_user_id
+                    self.from_user_nickname = self.actual_user_nickname
+            self.ctype = ContextType.EXIT_GROUP
+            self.content = data.content
         elif "与群里其他人都不是朋友关系" in data.content:
             names = extract_quoted_content(data.content)
             if names and len(names) == 1:
