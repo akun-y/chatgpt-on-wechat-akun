@@ -55,8 +55,8 @@ def get_emoji_file(xmlContent):
                     response.raise_for_status()  # 检查请求是否成功
 
                     # 下载文件
-                    with open(path, 'wb') as file:
-                        for chunk in response.iter_content(chunk_size=8192): 
+                    with open(path, "wb") as file:
+                        for chunk in response.iter_content(chunk_size=8192):
                             if chunk:  # 过滤掉保持连接的chunk
                                 file.write(chunk)
                 print(f"EMOJI文件已下载到：{path}")
@@ -256,6 +256,10 @@ class WcFerryMessage(ChatMessage):
                 if not image_path:
                     self.ctype = ContextType.IMAGE
                     self.content = data.extra
+            elif wechat_msg.type == 34: # 语音 akun
+                # <msg><voicemsg endflag="1" cancelflag="0" forwardflag="0" voiceformat="4" voicelength="5176" length="8192" bufid="0" aeskey="333e54675198949dbbf281d2c580d0e5" voiceurl="3052020100044b30490201000204a3d6065c02032f56c3020415bead27020467025a86042430343339323339342d663438362d343333382d616632632d66373134336130373239366602040524000f0201000400588fffe3" voicemd5="" clientmsgid="41323231303163643938353964363400091738100624ec9355feae1104" fromusername="a37259705" /></msg>
+                self.ctype = ContextType.VOICE
+                self.content = data.content
             elif wechat_msg.type == 42:  # 公众号名片: akun
                 #'<?xml version="1.0"?>\n<msg bigheadimgurl="http://wx.qlogo.cn/mmhead/aXUpZVUYfjxV6vZTDtAibfQ1vibiaWmwlvc26srXzbhtiaqY4jdGnPicGKlDSibvZ9IgV3jWeicBic5xXW8/0" smallheadimgurl="http://wx.qlogo.cn/mmhead/aXUpZVUYfjxV6vZTDtAibfQ1vibiaWmwlvc26srXzbhtiaqY4jdGnPicGKlDSibvZ9IgV3jWeicBic5xXW8/132" username="v3_020b3826fd0301000000000099a40b2be66ec4000000501ea9a3dba12f95f6b60a0536a1adb6cdf025fdfbff48a06d15a45a651629aed94bd29def619c5ad162a2b065ffc4ce1a75e2c30aa485503a2b46@stranger" nickname="熊猫侠户外" fullpy="" shortpy="" alias="" imagestatus="4" scene="17" province="浙江" city="中国大陆" sign="" sex="0" certflag="24" certinfo="杭州牧羽科技有限公司" brandIconUrl="http://mmbiz.qpic.cn/mmbiz_png/zibWicGL4mP95LibJQicZ2RWheGn8y8Yst4Hd0B4MptyjT3ewPzlxMCGQ7kNSFW5xPGicUGMJtBpJOiboY3x8RFjqsjg/0?wx_fmt=png" brandHomeUrl="" brandSubscriptConfigUrl="{&quot;urls&quot;:[{&quot;title&quot;:&quot;查看历史消息&quot;,&quot;url&quot;:&quot;http:\\/\\/mp.weixin.qq.com\\/mp\\/getmasssendmsg?__biz=MzUxNzYxNTk5Nw==#wechat_webview_type=1&amp;wechat_redirect&quot;,&quot;title_key&quot;:&quot;__mp_wording__brandinfo_history_massmsg&quot;},{&quot;title&quot;:&quot;查看地理位置&quot;,&quot;url&quot;:&quot;http:\\/\\/3gimg.qq.com\\/lightmap\\/v1\\/wxmarker\\/index.html?marker=coord:30.2460250854,120.210792542;title:%E7%86%8A%E7%8C%AB%E4%BE%A0%E6%88%B7%E5%A4%96;addr:%E6%B5%99%E6%B1%9F%E7%9C%81%E6%9D%AD%E5%B7%9E%E5%B8%82&amp;referer=wexinmp_profile&quot;,&quot;title_key&quot;:&quot;__mp_wording__brandinfo_location&quot;}]}" brandFlags="0" regionCode="CN_Zhejiang_Hangzhou" biznamecardinfo="ClRDZy9uaG9ybmpLdmt2cURtaUxmbHBKWVFHQm9BSWdFeEtOZUNuTFlHTWc5bmFGOWtaREUzWlRRM1ltWmtOMk02REZFeWIwZzFlRVUyWVdGdmN3PT0SeEFBZm1QY3dFQUFBQkFBQUFBQUJTWW5UVkJyMDhVRVU4VndISFppQUFBQUJ0RU5zTk9RK0MyNDVkMnBxS05QQlFmUWpVd09kdE5SQmhYc005eE90YTFtaVlhRDE5ck02bnQxU2ZjSVAxNEVWWUVqUDlhWjkzeWRSUg==" antispamticket="v4_000b708f0b04000001000000000006877be1eed14fcf4c67b209c7661000000050ded0b020927e3c97896a09d47e6e9e36d3ecbeff6ec13f1f53e4b83d9542d5d74182bb149b84553be6bce83c12e6343a9748714ea2981b00b99dfcfba26709ab48b1eae8f858b7d43161d9ab8309834028b519d41878bc16a72627fd398ebedece0f524508e27767a23f81c9ca33452ebfa4f7b0f74fd82c9eab99e4b14648ada57c4acf2e1fe0f89153b880281862a55e2ac52e12d3be0397c7bf438db4eb0b1b24dd9c925a7b7e8942943e01b465a7dd6b08b65cddcbf6e59d542f467e7b3172d03c82db8c6ddf8274ea758891dbcd0d0689ced4874484748457df6e7e1acfa010cceb0e07@stranger" />\n'
                 self.ctype = ContextType.CARD
@@ -265,7 +269,7 @@ class WcFerryMessage(ChatMessage):
             elif wechat_msg.type == 47:  # 需要缓存文件的消息类型---表情图片-akun
                 self.ctype = ContextType.EMOJI
                 # 下載超時，導致所有消息沒法接收
-                #emoji_path = get_emoji_file(data.content)
+                # emoji_path = get_emoji_file(data.content)
                 self.content = data.content
                 self._prepare_fn = lambda: None
                 if self.is_group:
@@ -573,74 +577,79 @@ class WcFerryMessage(ChatMessage):
             #     self.rooms[data.roomid]["member_list"] = members
 
     def proc_quoted_wechat_msg(self, data):
-        # 引用消息,视频号视频,QQ音乐,聊天记录,APP小程序,表情,微信直播,微信服务号
-        xmlContent = data.xml
+        try:
+            # 引用消息,视频号视频,QQ音乐,聊天记录,APP小程序,表情,微信直播,微信服务号
+            xmlContent = data.xml
 
-        root = ET.XML(xmlContent)
-        msg_source = root.find("msgsource")
+            # 解析XML
+            root = ET.fromstring(xmlContent)
 
-        logger.info(f"收到微信消息(47):{msg_source}")
+            # 获取type
+            type = root.find(".//sec_msg_node/type").text
 
-        appmsg = root.find("appmsg")
-        if not appmsg:
-            return
-        msg = appmsg.find("title")
-        type = appmsg.find("type")
-        if type.text == "51":  # 视频号视频
-            self.content = xmlContent
-            self.ctype = ContextType.WECHAT_VIDEO
-        elif type.text == "3":  # QQ音乐
-            self.content = xmlContent
-            self.ctype = ContextType.XML
-        elif type.text == "4":  # 腾讯为旗下小弟开的特权卡片，b站，小红书等
-            self.content = xmlContent
-            self.ctype = ContextType.XML
-        elif type.text == "19" or type.text == "40":  # 聊天记录
-            self.content = xmlContent
-            self.ctype = ContextType.XML
-        elif type.text == "36":  # APP小程序
-            self.content = xmlContent
-            self.ctype = ContextType.XML
-        elif type.text == "8":  # 表情
-            self.content = xmlContent
-            self.ctype = ContextType.XML
-        elif type.text == "63":  # 微信直播
-            self.content = xmlContent
-            self.ctype = ContextType.XML
-        elif type.text == "24":  # 微信收藏
-            self.content = xmlContent
-            self.ctype = ContextType.XML
-        elif type.text == "21":  # 未知
-            self.content = xmlContent
-            self.ctype = ContextType.XML
-        else:
-            # 引用消息类型
-            refermsg = appmsg.find("refermsg")
-            refwxid = refermsg.find("chatusr")
-            refname = refermsg.find("displayname")
-            refname_text = refname.text
-            if refermsg is not None:
-                if self.is_group:
-                    # room_members = load_json_from_file(
-                    #     directory, "wcferry_room_members.json"
-                    # )
-                    # self.actual_user_nickname = get_display_name_or_nickname(
-                    #     room_members, data.roomid, self.from_user_id
-                    # )
-                    self.actual_user_nickname = self.channel.get_user_name(
-                        self.from_user_ids
-                    )
-                    self.content = msg.text
-                    self.to_user_id = refwxid.text
-                    self.ctype = ContextType.QUOTE
-                    self.to_user_nickname = refname_text
-                    if self.to_user_id is None:
-                        self.to_user_id = self.from_user_id
-                    print(
-                        f"【{self.actual_user_nickname}】 ID:{self.from_user_id}  引用了 【{self.to_user_nickname}】 ID:{self.to_user_id} 的信息并回复 【{self.content}】"
-                    )
+            appmsg = root.find("appmsg")
+            if not appmsg:
+                logger.error(f"收到引用类消息,未处理:{xmlContent}")
+                return
+            msg = appmsg.find("title")
+            type = appmsg.find("type")
+            if type.text == "51":  # 视频号视频
+                self.content = xmlContent
+                self.ctype = ContextType.WECHAT_VIDEO
+            elif type.text == "3":  # QQ音乐
+                self.content = xmlContent
+                self.ctype = ContextType.XML
+            elif type.text == "4":  # 腾讯为旗下小弟开的特权卡片，b站，小红书等
+                self.content = xmlContent
+                self.ctype = ContextType.XML
+            elif type.text == "19" or type.text == "40":  # 聊天记录
+                self.content = xmlContent
+                self.ctype = ContextType.XML
+            elif type.text == "36":  # APP小程序
+                self.content = xmlContent
+                self.ctype = ContextType.XML
+            elif type.text == "8":  # 表情
+                self.content = xmlContent
+                self.ctype = ContextType.XML
+            elif type.text == "63":  # 微信直播
+                self.content = xmlContent
+                self.ctype = ContextType.XML
+            elif type.text == "24":  # 微信收藏
+                self.content = xmlContent
+                self.ctype = ContextType.XML
+            elif type.text == "21":  # 未知
+                self.content = xmlContent
+                self.ctype = ContextType.XML
             else:
-                pass
+                # 引用消息类型
+                refermsg = appmsg.find("refermsg")
+                refwxid = refermsg.find("chatusr")
+                refname = refermsg.find("displayname")
+                refname_text = refname.text
+                if refermsg is not None:
+                    if self.is_group:
+                        # room_members = load_json_from_file(
+                        #     directory, "wcferry_room_members.json"
+                        # )
+                        # self.actual_user_nickname = get_display_name_or_nickname(
+                        #     room_members, data.roomid, self.from_user_id
+                        # )
+                        self.actual_user_nickname = self.channel.get_user_name(
+                            self.from_user_ids
+                        )
+                        self.content = msg.text
+                        self.to_user_id = refwxid.text
+                        self.ctype = ContextType.QUOTE
+                        self.to_user_nickname = refname_text
+                        if self.to_user_id is None:
+                            self.to_user_id = self.from_user_id
+                        print(
+                            f"【{self.actual_user_nickname}】 ID:{self.from_user_id}  引用了 【{self.to_user_nickname}】 ID:{self.to_user_id} 的信息并回复 【{self.content}】"
+                        )
+                else:
+                    pass
+        except Exception as e:
+            logger.error("proc_quoted_wechat_msg:", e)
 
     # def get_wxid_by_name(self, name):
     #     for item in self.channel.contracts_ary:
