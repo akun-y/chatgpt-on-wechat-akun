@@ -99,8 +99,6 @@ def _check(func):
 
 # 注册消息回调
 def all_msg_handler(wcf: Wcf, message: WxMsg):
-    logger.debug(f"收到消息: {message}")
-
     try:
         cmsg = WcFerryMessage(WcFerryChannel(), wcf, message)
         ifgroup = message._is_group
@@ -112,7 +110,6 @@ def all_msg_handler(wcf: Wcf, message: WxMsg):
         WcFerryChannel().handle_group(cmsg)
     else:
         WcFerryChannel().handle_single(cmsg)
-    logger.debug(f"收到cmsg: {cmsg}")
     return None
 
 
@@ -289,7 +286,6 @@ class WcFerryChannel(ChatChannel):
 
         """如果要使用bridge_room插件，需要取消上面这段代码的注释"""
         if cmsg.ctype == ContextType.VOICE:
-
             if not conf().get("speech_recognition"):
                 return
             logger.debug("[WX]receive voice for group msg: {}".format(cmsg.content))

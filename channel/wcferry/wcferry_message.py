@@ -193,6 +193,7 @@ class WcFerryMessage(ChatMessage):
             self.msg_id = wechat_msg.id
             self.create_time = wechat_msg.ts
             self.is_group = wechat_msg._is_group
+            self.my_msg = wechat_msg._is_self
             self.scf = scf
             self.channel = channel
 
@@ -256,7 +257,7 @@ class WcFerryMessage(ChatMessage):
                 if not image_path:
                     self.ctype = ContextType.IMAGE
                     self.content = data.extra
-            elif wechat_msg.type == 34: # 语音 akun
+            elif wechat_msg.type == 34:  # 语音 akun
                 # <msg><voicemsg endflag="1" cancelflag="0" forwardflag="0" voiceformat="4" voicelength="5176" length="8192" bufid="0" aeskey="333e54675198949dbbf281d2c580d0e5" voiceurl="3052020100044b30490201000204a3d6065c02032f56c3020415bead27020467025a86042430343339323339342d663438362d343333382d616632632d66373134336130373239366602040524000f0201000400588fffe3" voicemd5="" clientmsgid="41323231303163643938353964363400091738100624ec9355feae1104" fromusername="a37259705" /></msg>
                 self.ctype = ContextType.VOICE
                 self.content = data.content
