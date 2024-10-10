@@ -370,27 +370,21 @@ class WcFerryMessage(ChatMessage):
                 # 群名
                 self.other_user_nickname = self.channel.get_room_name(data.roomid)
                 self.other_user_id = data.roomid
-                if self.from_user_id:
-                    # room_info = get_room_info(wework=wework, conversation_id=conversation_id)
 
-                    # at_list = data.get('at_list', [])
+                # room_info = get_room_info(wework=wework, conversation_id=conversation_id)
+                at_list = getattr(data, 'at_list', [])
+                self.is_at = self.user_id in at_list
 
-                    # self.is_at = self.user_id in at_list
-                    content = data.content or ""
-                    pattern = f"@{re.escape(self.nickname)}(\u2005|\u0020)"
-                    self.is_at |= bool(re.search(pattern, content))
+                content = data.content or ""
+                pattern = f"@{re.escape(self.nickname)}(\u2005|\u0020)"
+                self.is_at |= bool(re.search(pattern, content))
 
-                    # bot在该群众的别名
-                    user_name_in_group = self.channel.get_room_member_name(
-                        data.roomid, self.user_id
-                    )
-                    pattern = f"@{re.escape(user_name_in_group)}(\u2005|\u0020)"
-                    self.is_at |= bool(re.search(pattern, content))
-
-                else:
-                    logger.error(
-                        f"群聊消息中没有找到 conversation_id 或 room_wxid {data}"
-                    )
+                # bot在该群众的别名
+                user_name_in_group = self.channel.get_room_member_name(
+                    data.roomid, self.user_id
+                )
+                pattern = f"@{re.escape(user_name_in_group)}(\u2005|\u0020)"
+                self.is_at |= bool(re.search(pattern, content))
 
             logger.debug(
                 f"WcFerryMessage has be en successfully instantiated with message id: {self.msg_id}"
