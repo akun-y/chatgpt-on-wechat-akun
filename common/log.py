@@ -18,7 +18,7 @@ logger.add(
 # 添加文件日志记录器，按日期命名，设置为 info 级别
 logger.add(
     "logs/run_{time:YYYY-MM-DD}.log",
-    format="[{level}][{time:YYYY-MM-DD HH:mm:ss}] - {message} [{file}:{line}]",
+    format="[{level}][{time:YYYY-MM-DD HH:mm:ss}] {message} [{file}:{line}]",
     rotation="1 day",  # 每天午夜轮换日志文件
     encoding="utf-8",
     level="INFO",
