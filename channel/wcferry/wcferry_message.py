@@ -193,6 +193,7 @@ class WcFerryMessage(ChatMessage):
             self.msg_id = wechat_msg.id
             self.create_time = wechat_msg.ts
             self.is_group = wechat_msg._is_group
+            self.my_msg = wechat_msg._is_self
             self.scf = scf
             self.channel = channel
 
@@ -256,7 +257,7 @@ class WcFerryMessage(ChatMessage):
                 if not image_path:
                     self.ctype = ContextType.IMAGE
                     self.content = data.extra
-            elif wechat_msg.type == 34: # 语音 akun
+            elif wechat_msg.type == 34:  # 语音 akun
                 # <msg><voicemsg endflag="1" cancelflag="0" forwardflag="0" voiceformat="4" voicelength="5176" length="8192" bufid="0" aeskey="333e54675198949dbbf281d2c580d0e5" voiceurl="3052020100044b30490201000204a3d6065c02032f56c3020415bead27020467025a86042430343339323339342d663438362d343333382d616632632d66373134336130373239366602040524000f0201000400588fffe3" voicemd5="" clientmsgid="41323231303163643938353964363400091738100624ec9355feae1104" fromusername="a37259705" /></msg>
                 self.ctype = ContextType.VOICE
                 self.content = data.content
@@ -369,27 +370,21 @@ class WcFerryMessage(ChatMessage):
                 # 群名
                 self.other_user_nickname = self.channel.get_room_name(data.roomid)
                 self.other_user_id = data.roomid
-                if self.from_user_id:
-                    # room_info = get_room_info(wework=wework, conversation_id=conversation_id)
 
-                    # at_list = data.get('at_list', [])
+                # room_info = get_room_info(wework=wework, conversation_id=conversation_id)
+                at_list = getattr(data, 'at_list', [])
+                self.is_at = self.user_id in at_list
 
-                    # self.is_at = self.user_id in at_list
-                    content = data.content or ""
-                    pattern = f"@{re.escape(self.nickname)}(\u2005|\u0020)"
-                    self.is_at |= bool(re.search(pattern, content))
+                content = data.content or ""
+                pattern = f"@{re.escape(self.nickname)}(\u2005|\u0020)"
+                self.is_at |= bool(re.search(pattern, content))
 
-                    # bot在该群众的别名
-                    user_name_in_group = self.channel.get_room_member_name(
-                        data.roomid, self.user_id
-                    )
-                    pattern = f"@{re.escape(user_name_in_group)}(\u2005|\u0020)"
-                    self.is_at |= bool(re.search(pattern, content))
-
-                else:
-                    logger.error(
-                        f"群聊消息中没有找到 conversation_id 或 room_wxid {data}"
-                    )
+                # bot在该群众的别名
+                user_name_in_group = self.channel.get_room_member_name(
+                    data.roomid, self.user_id
+                )
+                pattern = f"@{re.escape(user_name_in_group)}(\u2005|\u0020)"
+                self.is_at |= bool(re.search(pattern, content))
 
             logger.debug(
                 f"WcFerryMessage has be en successfully instantiated with message id: {self.msg_id}"

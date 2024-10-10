@@ -58,7 +58,6 @@ class ChatChannel(Channel):
                 group_name = cmsg.other_user_nickname
                 group_id = cmsg.other_user_id
                 logger.debug(f"正在处理群组消息，群名：{group_name}, 群ID：{group_id}")
-                # print(f"正在处理群组消息，群名：{group_name}, 群ID：{group_id}")
                 group_name_white_list = config.get("group_name_white_list", [])
                 group_name_keyword_white_list = config.get("group_name_keyword_white_list", [])
 
