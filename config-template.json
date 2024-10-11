@@ -1,15 +1,13 @@
 {
-  "open_ai_api_key": "",
-  "open_ai_api_base": "https://api.openai.com/v1",
-  "coze_api_base": "https://api.coze.cn/open_api/v2",
-  "coze_api_key" : "",
-  "coze_bot_id": "",
-  "model": "coze",
-  "channel_type": "ntchat",
+  "open_ai_api_key": "YOUR API KEY",
+  "model": "wenxin",
+  "channel_type": "wcferry",
   "proxy": "",
-  "hot_reload": false,
+  "debug": false,
+  "hot_reload": true,
   "single_chat_prefix": [
-    ""
+    "bot",
+    "@bot"
   ],
   "single_chat_reply_prefix": "[bot] ",
   "group_chat_prefix": [
@@ -36,6 +34,5 @@
   "subscribe_msg": "感谢您的关注！\n这里是ChatGPT，可以自由对话。\n支持语音对话。\n支持图片输入。\n支持图片输出，画字开头的消息将按要求创作图片。\n支持tool、角色扮演和文字冒险等丰富的插件。\n输入{trigger_prefix}#help 查看详细指令。",
   "use_linkai": true,
   "linkai_api_key": "",
-  "linkai_app_code": "",
-  "debug": false
+  "linkai_app_code": ""
 }
