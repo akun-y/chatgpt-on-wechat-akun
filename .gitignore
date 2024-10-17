@@ -44,7 +44,7 @@ channel/weworktop/last_key.txt
 *.pem
 cow-test/
 
-
+*.code-workspace
 
 plugins/godcmd/godcmd.py
 logs/

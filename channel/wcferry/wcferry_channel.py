@@ -508,7 +508,10 @@ class WcFerryChannel(ChatChannel):
                 "nickname": nickname,
                 "display_name": display_name,
             }
-            members[member.wxid] = new_item | contract if contract else new_item
+            new_item = new_item | contract if contract else new_item
+            if not new_item.get("avatar"):
+                new_item["avatar"] = self.__avatar_urls.get(member.wxid, "")
+            members[member.wxid] = new_item
         return members
 
     # 获取微信群列表,包括微信群成员
