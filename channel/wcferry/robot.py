@@ -29,7 +29,7 @@ class Robot:
 
         logger.warning("未配置模型")
         self.chat = None   
-        logger.info(f"已选择: {self.chat}")
+        logger.info(f"AI模型已选择: {self.chat}")
         
 
     @staticmethod

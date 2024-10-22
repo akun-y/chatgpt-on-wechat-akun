@@ -5,7 +5,6 @@ from pip._internal import main as pipmain
 
 from common.log import _reset_logger, logger
 
-
 def install(package):
     pipmain(["install", package])
 

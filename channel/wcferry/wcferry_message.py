@@ -237,28 +237,32 @@ class WcFerryMessage(ChatMessage):
                 else:
                     self.ctype = ContextType.TEXT
                     self.content = data.content
-            elif wechat_msg.type == 3:  # 需要缓存文件的消息类型-akun
+            elif wechat_msg.type == 3:  # 需要缓存文件的消息类型-akun                    
                 ret = self.scf.download_attach(data.id, "", data.extra)
-
-                img_dir = os.path.join(self.tmp_dir, "images")
-                cnt = 0
-                while cnt < 30:
-                    image_path = self.scf.decrypt_image(data.extra, img_dir)
-                    if image_path:
+                if ret == 0:
+                    img_dir = os.path.join(self.tmp_dir, "images")
+                    cnt = 0
+                    while cnt < 30:
+                        image_path = self.scf.decrypt_image(data.extra, img_dir)
+                        if image_path:
+                            self.ctype = ContextType.IMAGE
+                            self.content = image_path # 成功获取了图片,content为图片路径
+                            self._prepare_fn = lambda: None
+                            break
+                        sleep(1)
+                        cnt += 1
+                    if cnt >= 30:
+                        logger.error(f"下载图片附件超时:{self.from_user_nickname} {self.actual_user_nickname}")
+                    if not image_path:
                         self.ctype = ContextType.IMAGE
-                        self.content = data.content
-                        self._prepare_fn = lambda: None
-                        break
-                    sleep(1)
-                    cnt += 1
-                if cnt >= 30:
-                    logger.error(f"下载图片附件超时")
-                    logger.error(f"Image file {image_path} is not ready.")
-                if not image_path:
+                        self.content = data.extra
+                        logger.error(f"下载图片附件失败:{self.from_user_nickname} {self.actual_user_nickname}")
+                else:
+                    logger.error(f"下载图片附件失败:{self.from_user_nickname} {self.actual_user_nickname}")
                     self.ctype = ContextType.IMAGE
                     self.content = data.extra
             elif wechat_msg.type == 34:  # 语音 akun
-                # <msg><voicemsg endflag="1" cancelflag="0" forwardflag="0" voiceformat="4" voicelength="5176" length="8192" bufid="0" aeskey="333e54675198949dbbf281d2c580d0e5" voiceurl="3052020100044b30490201000204a3d6065c02032f56c3020415bead27020467025a86042430343339323339342d663438362d343333382d616632632d66373134336130373239366602040524000f0201000400588fffe3" voicemd5="" clientmsgid="41323231303163643938353964363400091738100624ec9355feae1104" fromusername="a37259705" /></msg>
+                # <msg><voicemsg endflag="1" cancelflag="0" forwardflag="0" voiceformat="4" voicelength="5176" length="8192" bufid="0" aeskey="333e54675198949dbbf281d2c580d0e5" voiceurl="3052020100044b30490201000204a3d6065c02032f56c3020415bead27020467025a86042430343339323339342d663433382d343333382d616632632d66373134336130373239366602040524000f0201000400588fffe3" voicemd5="" clientmsgid="41323231303163643938353964363400091738100624ec9355feae1104" fromusername="a37259705" /></msg>
                 self.ctype = ContextType.VOICE
                 self.content = data.content
             elif wechat_msg.type == 42:  # 公众号名片: akun
@@ -374,17 +378,25 @@ class WcFerryMessage(ChatMessage):
                 # room_info = get_room_info(wework=wework, conversation_id=conversation_id)
                 at_list = getattr(data, 'at_list', [])
                 self.is_at = self.user_id in at_list
-
-                content = data.content or ""
-                pattern = f"@{re.escape(self.nickname)}(\u2005|\u0020)"
-                self.is_at |= bool(re.search(pattern, content))
-
-                # bot在该群众的别名
-                user_name_in_group = self.channel.get_room_member_name(
-                    data.roomid, self.user_id
-                )
-                pattern = f"@{re.escape(user_name_in_group)}(\u2005|\u0020)"
-                self.is_at |= bool(re.search(pattern, content))
+                if self.is_at:
+                    logger.info(f"收到is_at群消息:{self.user_id}")
+                else:
+                    content = data.content or ""
+                    pattern = f"@{re.escape(self.nickname)}(\u2005|\u0020)"
+                    self.is_at |= bool(re.search(pattern, content))
+                    if self.is_at:
+                        logger.info(f"收到is_at群消息:{self.nickname}")
+                        self.content = re.sub(pattern, '', content)
+                    else:
+                        # bot在该群中的别名
+                        user_name_in_group = self.channel.get_room_member_name(
+                            data.roomid, self.user_id
+                        )
+                        pattern = f"@{re.escape(user_name_in_group)}(\u2005|\u0020)"
+                        self.is_at |= bool(re.search(pattern, content))
+                        if self.is_at:
+                            logger.info(f"收到is_at群消息:{user_name_in_group}")
+                            self.content = re.sub(pattern, '', content)
 
             logger.debug(
                 f"WcFerryMessage has be en successfully instantiated with message id: {self.msg_id}"
