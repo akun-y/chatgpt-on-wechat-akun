@@ -100,7 +100,7 @@ class Robot:
         elif msg.type == 10000:  # 系统信息
             self.sayHiToNewFriend(msg)
 
-        elif msg.type == 0x01:  # 文本消息
+        elif msg.type == 0x01:  # 私聊文本消息
             # 让配置加载更灵活，自己可以更新配置。也可以利用定时任务更新。
             if msg.from_self():
                 logger.info(f"===>自己发出(私聊): {msg.content}")
@@ -111,6 +111,8 @@ class Robot:
                     self.sendTextMsg("已经重新载入配置文件", msg.sender)
             else:  # 进入消息处理函数
                 self.msgHandler(self.wcf, msg)
+        elif msg.type == 0x03:  # 私聊图片消息
+            self.msgHandler(self.wcf, msg)
 
     def onMsg(self, msg: WxMsg) -> int:
         try:
