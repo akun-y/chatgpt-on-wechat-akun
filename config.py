@@ -317,7 +317,8 @@ def load_config():
         logger.add(sys.stderr, level="DEBUG") 
         logger.debug("[INIT] set log level to DEBUG")
 
-    logger.info("[INIT] load config: {}".format(drag_sensitive(config)))
+    #logger.info("[INIT] load config: {}".format(drag_sensitive(config)))
+    logger.info("[Config] Config loaded {}".format(config.get("bot_name")))
 
     config.load_user_datas()
 

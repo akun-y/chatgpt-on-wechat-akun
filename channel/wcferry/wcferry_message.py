@@ -13,6 +13,8 @@ from common.log import logger
 import urllib.request
 from time import sleep
 
+from plugins.plugin_comm.plugin_comm import save_wxgroups_to_file
+
 
 def process_payment_info(text):
     # 将文本按行分割，以便处理
@@ -437,6 +439,7 @@ class WcFerryMessage(ChatMessage):
             names = extract_invite_names(data.content)
             if names:
                 if len(names) >= 2:
+                    
                     self.actual_user_id = self.channel.get_room_member_wxid(
                         data.roomid, names[0]
                     ) or self.channel.get_user_wxid_by_name(names[0])
@@ -444,23 +447,30 @@ class WcFerryMessage(ChatMessage):
                     self.from_user_id = self.actual_user_id
                     self.from_user_nickname = self.actual_user_nickname
 
-                    self.to_user_id = self.channel.get_room_member_wxid(
+                    _name = names[1]
+                    _user_id = self.to_user_id = self.channel.get_room_member_wxid(
                         data.roomid, names[1]
                     ) or self.channel.get_user_wxid_by_name(names[1])
-                    self.to_user_nickname = names[1]
+                    
+                    self.to_user_id = _user_id
+                    self.to_user_nickname = _name
                 elif len(names) == 1:
-                    name = names[0]
-                    self.actual_user_nickname = name
-                    self.actual_user_id = self.channel.get_room_member_wxid(
-                        data.roomid, name
+                    _name = names[0]
+                    _user_id = self.channel.get_room_member_wxid(
+                        data.roomid, _name
                     ) or self.channel.get_user_wxid_by_name(name)
-
+                    
+                    self.actual_user_nickname = _name
+                    self.actual_user_id = _user_id
+                    
+                self.channel.add_room_member(data.roomid,_name,_user_id)
+                
             self.ctype = ContextType.JOIN_GROUP
             self.content = data.content
             time.sleep(3)  # 確保群名稱已經寫入sqlite
             # save_json_to_file(directory, result, "wcferry_room_members.json")
         elif "移出了群聊" in data.content:
-            names = extract_invite_names(data.content)
+            names = extract_quoted_content(data.content)
             if names:
                 if len(names) >= 2:
                     self.actual_user_id = self.channel.get_room_member_wxid(
@@ -477,6 +487,7 @@ class WcFerryMessage(ChatMessage):
                     ) or self.channel.get_user_wxid_by_name(name)
                     self.from_user_id = self.actual_user_id
                     self.from_user_nickname = self.actual_user_nickname
+                self.channel.remove_room_member(data.roomid,self.actual_user_id)
             self.ctype = ContextType.EXIT_GROUP
             self.content = data.content
         elif "与群里其他人都不是朋友关系" in data.content:

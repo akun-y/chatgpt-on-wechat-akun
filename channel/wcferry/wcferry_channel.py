@@ -26,6 +26,7 @@ from wcferry import Wcf, WxMsg
 from channel.wcferry.wcferry_run import save_json_to_file
 from wcferry.roomdata_pb2 import RoomData
 
+from plugins.plugin_comm.plugin_comm import save_wxgroups_to_file
 from plugins.plugin_manager import PluginManager
 
 
@@ -183,7 +184,7 @@ class WcFerryChannel(ChatChannel):
             if new_rooms:
                 self.rooms = self.merge_rooms(self.rooms, new_rooms)
 
-            save_json_to_file(self.directory, self.rooms, "wcferry_rooms.json")
+            save_wxgroups_to_file(self.rooms)
 
         thread = threading.Thread(target=fun_proc)
         thread.start()
@@ -624,7 +625,16 @@ class WcFerryChannel(ChatChannel):
         if not member_name:
             member_name = self.get_user_name(member_id)
         return member_name
-
+    def add_room_member(self,room_id,user_name,user_wxid):
+        room = self.rooms.get(room_id)
+        if room:           
+            room["member_list"][user_wxid] = {"nickname":user_name,"name":user_name,"display_name":user_name}
+            save_wxgroups_to_file(self.rooms)
+    def remove_room_member(self,room_id,user_wxid):
+        room = self.rooms.get(room_id)
+        if room:
+            room["member_list"].pop(user_wxid)
+            save_wxgroups_to_file(self.rooms)
     def get_room_member_wxid(self, room_id, name):
         if not room_id or not name:
             return ""
