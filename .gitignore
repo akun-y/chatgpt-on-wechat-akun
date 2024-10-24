@@ -50,7 +50,7 @@ plugins/godcmd/godcmd.py
 logs/
 images/
 tmp/
-!head-img/user.png
 head-img/*
+!head-img/user.png
 merged-xxxx.jpg
 example.xlsx
