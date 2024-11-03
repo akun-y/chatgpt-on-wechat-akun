@@ -321,8 +321,8 @@ class ChatChannel(Channel):
                             "single_chat_reply_suffix", "")
                     reply.content = reply_text
 
-                elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
-                    reply.content = "[" + str(reply.type) + "]\n" + reply.content
+                elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:                    
+                    reply.content = "[" + str(reply.type) + "]\n" + str(reply.content)
                 elif reply.type == ReplyType.IMAGE_URL or reply.type == ReplyType.VOICE or reply.type == ReplyType.IMAGE:
                     pass
                 elif reply.type == ReplyType.VIDEO_URL:
