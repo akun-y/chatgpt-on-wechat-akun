@@ -255,8 +255,7 @@ class WcFerryMessage(ChatMessage):
                     if not image_path:
                         self.ctype = ContextType.IMAGE
                         self.content = data.extra
-                        logger.error(f"下载图片附件失败:{self.from_user_nickname} {self.
-                                     actual_user_nickname}")
+                        logger.error(f"下载图片附件失败:{self.from_user_nickname} {self.actual_user_nickname}")
                 else:
                     logger.error(f"下载图片附件失败2:{self.from_user_nickname} {self.actual_user_nickname}")
                     self.ctype = ContextType.IMAGE
