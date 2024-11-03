@@ -64,3 +64,14 @@ def load_json_from_file(directory, filename):
     except Exception as e:
         print(f"Failed to read from file: {e}")
         return None
+    
+# 专用于groupx返回的用户信息
+def save_wxgroups_to_file(rooms:dict,directory=None,file_name=None):
+    if not directory:
+        directory = os.path.join(os.getcwd(), "tmp")
+    if not directory:
+        os.makedirs(directory, exist_ok=True)
+    if not file_name:
+        file_name = "wcferry_rooms.json"   
+
+    save_json_to_file(directory, rooms, file_name)
