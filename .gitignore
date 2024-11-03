@@ -54,3 +54,4 @@ head-img/*
 !head-img/user.png
 merged-xxxx.jpg
 example.xlsx
+file_cache.json

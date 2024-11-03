@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import time
@@ -7,14 +6,9 @@ import xml.etree.ElementTree as ET
 import requests
 from bridge.context import ContextType
 from channel.chat_message import ChatMessage
-from channel.wcferry.WeFerryImageDecoder import WcFerryImageDecoder
 from channel.wcferry.wcferry_run import load_json_from_file, save_json_to_file
 from common.log import logger
-import urllib.request
 from time import sleep
-
-from plugins.plugin_comm.plugin_comm import save_wxgroups_to_file
-
 
 def process_payment_info(text):
     # 将文本按行分割，以便处理
@@ -239,10 +233,13 @@ class WcFerryMessage(ChatMessage):
                 else:
                     self.ctype = ContextType.TEXT
                     self.content = data.content
-            elif wechat_msg.type == 3:  # 需要缓存文件的消息类型-akun                    
+            elif wechat_msg.type == 3:  # 需要缓存文件的消息类型-akun
+                sleep(2)
                 ret = self.scf.download_attach(data.id, "", data.extra)
                 if ret == 0:
                     img_dir = os.path.join(self.tmp_dir, "images")
+                    if not os.path.exists(img_dir):
+                        os.makedirs(img_dir)
                     cnt = 0
                     while cnt < 30:
                         image_path = self.scf.decrypt_image(data.extra, img_dir)
@@ -258,9 +255,10 @@ class WcFerryMessage(ChatMessage):
                     if not image_path:
                         self.ctype = ContextType.IMAGE
                         self.content = data.extra
-                        logger.error(f"下载图片附件失败:{self.from_user_nickname} {self.actual_user_nickname}")
+                        logger.error(f"下载图片附件失败:{self.from_user_nickname} {self.
+                                     actual_user_nickname}")
                 else:
-                    logger.error(f"下载图片附件失败:{self.from_user_nickname} {self.actual_user_nickname}")
+                    logger.error(f"下载图片附件失败2:{self.from_user_nickname} {self.actual_user_nickname}")
                     self.ctype = ContextType.IMAGE
                     self.content = data.extra
             elif wechat_msg.type == 34:  # 语音 akun
