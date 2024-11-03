@@ -26,7 +26,6 @@ from wcferry import Wcf, WxMsg
 from channel.wcferry.wcferry_run import save_json_to_file
 from wcferry.roomdata_pb2 import RoomData
 
-from plugins.plugin_comm.plugin_comm import save_wxgroups_to_file
 from plugins.plugin_manager import PluginManager
 
 
