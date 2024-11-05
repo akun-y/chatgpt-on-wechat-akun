@@ -312,7 +312,8 @@ def load_config():
                 else:
                     config[name] = value
 
-    if config.get("debug", False):        
+    # debug 从环境中获取时，可能为字符串'WARN'，所以需要判断
+    if config.get("debug", False) == "DEBUG" or config.get("debug", False) == True:        
         logger.remove()  # Remove the default logger
         logger.add(sys.stderr, level="DEBUG") 
         logger.debug("[INIT] set log level to DEBUG")
