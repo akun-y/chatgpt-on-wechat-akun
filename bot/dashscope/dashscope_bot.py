@@ -1,6 +1,6 @@
 # encoding:utf-8
 
-from bot.bot1 import Bot
+from bot.bot import Bot
 from bot.session_manager import SessionManager
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType

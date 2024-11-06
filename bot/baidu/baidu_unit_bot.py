@@ -2,7 +2,7 @@
 
 import requests
 
-from bot.bot1 import Bot
+from bot.bot import Bot
 from bridge.reply import Reply, ReplyType
 
 

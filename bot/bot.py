@@ -15,4 +15,3 @@ class Bot(object):
         :return: reply content
         """
         raise NotImplementedError
-

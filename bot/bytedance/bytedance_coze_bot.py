@@ -6,7 +6,7 @@ from typing import List, Tuple
 import requests
 from requests import Response
 
-from bot.bot1 import Bot
+from bot.bot import Bot
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
 from bot.session_manager import SessionManager
 from bridge.context import ContextType

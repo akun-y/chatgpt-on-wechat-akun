@@ -1,7 +1,7 @@
 # encoding:utf-8
 
 import requests, json
-from bot.bot1 import Bot
+from bot.bot import Bot
 from bot.session_manager import SessionManager
 from bot.baidu.baidu_wenxin_session import BaiduWenxinSession
 from bridge.context import ContextType, Context

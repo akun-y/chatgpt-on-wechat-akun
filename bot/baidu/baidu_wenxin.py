@@ -1,7 +1,9 @@
 # encoding:utf-8
 
-import requests, json
-from bot.bot1 import Bot
+import requests
+import json
+from common import const
+from bot.bot import Bot
 from bot.session_manager import SessionManager
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
@@ -16,9 +18,20 @@ class BaiduWenxinBot(Bot):
 
     def __init__(self):
         super().__init__()
-        wenxin_model = conf().get("baidu_wenxin_model") or "eb-instant"
-        if conf().get("model") and conf().get("model") == "wenxin-4":
-            wenxin_model = "completions_pro"
+        wenxin_model = conf().get("baidu_wenxin_model")
+        self.prompt_enabled = conf().get("baidu_wenxin_prompt_enabled")
+        if self.prompt_enabled:
+            self.prompt = conf().get("character_desc", "")
+            if self.prompt == "":
+                logger.warn("[BAIDU] Although you enabled model prompt, character_desc is not specified.")
+        if wenxin_model is not None:
+            wenxin_model = conf().get("baidu_wenxin_model") or "eb-instant"
+        else:
+            if conf().get("model") and conf().get("model") == const.WEN_XIN:
+                wenxin_model = "completions"
+            elif conf().get("model") and conf().get("model") == const.WEN_XIN_4:
+                wenxin_model = "completions_pro"
+
         self.sessions = SessionManager(BaiduWenxinSession, model=wenxin_model)
 
     def reply(self, query, context=None):
@@ -76,7 +89,7 @@ class BaiduWenxinBot(Bot):
             headers = {
                 'Content-Type': 'application/json'
             }
-            payload = {'messages': session.messages,'system': session.system_prompt}
+            payload = {'messages': session.messages, 'system': self.prompt} if self.prompt_enabled else {'messages': session.messages}
             response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
             response_text = json.loads(response.text)
             logger.info(f"[BAIDU] response text={response_text}")
@@ -94,7 +107,7 @@ class BaiduWenxinBot(Bot):
             logger.warn("[BAIDU] Exception: {}".format(e))
             need_retry = False
             self.sessions.clear_session(session.session_id)
-            result = {"completion_tokens": 0, "content": "出错了: {}".format(e)}
+            result = {"total_tokens": 0, "completion_tokens": 0, "content": "出错了: {}".format(e)}
             return result
 
     def get_access_token(self):

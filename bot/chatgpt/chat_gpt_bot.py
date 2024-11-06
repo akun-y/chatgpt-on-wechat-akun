@@ -6,7 +6,7 @@ import openai
 import openai.error
 import requests
 
-from bot.bot1 import Bot
+from bot.bot import Bot
 from bot.chatgpt.prompt_dict import get_prompt
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
 from bot.openai.open_ai_image import OpenAIImage

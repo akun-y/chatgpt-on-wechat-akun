@@ -5,7 +5,7 @@ import time
 import openai
 import openai.error
 
-from bot.bot1 import Bot
+from bot.bot import Bot
 from bot.openai.open_ai_image import OpenAIImage
 from bot.openai.open_ai_session import OpenAISession
 from bot.session_manager import SessionManager

@@ -6,7 +6,7 @@ Google gemini bot
 """
 # encoding:utf-8
 
-from bot.bot1 import Bot
+from bot.bot import Bot
 import google.generativeai as genai
 from bot.gemini.google_genimi_vision import GeminiVision
 

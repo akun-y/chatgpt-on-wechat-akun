@@ -9,7 +9,7 @@ import openai.error
 import broadscope_bailian
 from broadscope_bailian import ChatQaMessage
 
-from bot.bot1 import Bot
+from bot.bot import Bot
 from bot.ali.ali_qwen_session import AliQwenSession
 from bot.session_manager import SessionManager
 from bridge.context import ContextType

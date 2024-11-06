@@ -4,7 +4,7 @@ import time
 
 import openai
 import openai.error
-from bot.bot1 import Bot
+from bot.bot import Bot
 from bot.minimax.minimax_session import MinimaxSession
 from bot.session_manager import SessionManager
 from bridge.context import Context, ContextType

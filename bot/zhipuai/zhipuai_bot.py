@@ -4,7 +4,7 @@ import time
 
 import openai
 import openai.error
-from bot.bot1 import Bot
+from bot.bot import Bot
 from bot.zhipuai.zhipu_ai_session import ZhipuAISession
 from bot.zhipuai.zhipu_ai_image import ZhipuAIImage
 from bot.session_manager import SessionManager
