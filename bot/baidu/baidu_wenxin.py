@@ -19,7 +19,7 @@ class BaiduWenxinBot(Bot):
     def __init__(self):
         super().__init__()
         wenxin_model = conf().get("baidu_wenxin_model")
-        self.prompt_enabled = conf().get("baidu_wenxin_prompt_enabled")
+        self.prompt_enabled = conf().get("baidu_wenxin_prompt_enabled",True)
         if self.prompt_enabled:
             self.prompt = conf().get("character_desc", "")
             if self.prompt == "":
