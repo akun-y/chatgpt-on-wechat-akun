@@ -571,10 +571,6 @@ class WcFerryChannel(ChatChannel):
         return None
 
     def get_user_name(self, user_id):
-        name = self.contacts.get(user_id, {}).get("name", "")
-        if name:
-            return name
-
         result = wcf.query_sql(
             "MicroMsg.db", f"SELECT NickName FROM Contact WHERE UserName = '{user_id}';"
         )

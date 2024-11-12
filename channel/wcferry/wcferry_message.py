@@ -209,8 +209,8 @@ class WcFerryMessage(ChatMessage):
                     data.roomid, data.sender
                 )
                 self.actual_user_id = data.sender
+                
                 self.from_user_nickname = self.channel.get_room_name(data.roomid)
-
                 self.from_user_id = data.roomid
 
                 self.other_user_nickname = self.from_user_nickname
@@ -432,7 +432,7 @@ class WcFerryMessage(ChatMessage):
                 f"【{self.actual_user_nickname}】 ID:{self.actual_user_id}  拍了拍了 【{self.to_user_nickname}】 ID:{self.to_user_id} "
             )
 
-        elif "加入了群聊" in data.content:
+        elif "加入了群聊" in data.content or "加入群聊" in data.content:
             names = extract_invite_names(data.content)
             if names:
                 if len(names) >= 2:
@@ -582,7 +582,10 @@ class WcFerryMessage(ChatMessage):
                 ) or self.channel.get_user_wxid_by_name(name)
                 self.from_user_id = self.actual_user_id
                 self.from_user_nickname = self.actual_user_nickname
+                self.content = data.content
                 logger.info(f"收到未知消息:{self.content}")
+                logger.info(f"from_user_nickname:{self.from_user_nickname}")
+                logger.info(f"data:{data}")
             # self.ctype = ContextType.LEAVE_GROUP
             # self.content = f"{self.actual_user_nickname}退出了群聊！"
             # # 动态删除群成员
