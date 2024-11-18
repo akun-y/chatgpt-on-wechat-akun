@@ -8,3 +8,5 @@ paddleocr
 paddlepaddle
 pycryptodome
 openpyxl
+apscheduler
+dbutils
