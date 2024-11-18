@@ -424,7 +424,7 @@ class WcFerryMessage(ChatMessage):
             elif "拍了拍我" in data.content:
                 logger.warn("拍了拍我")
             else:  # 确保设置 to_user_id,区别与拍的不是我
-                logger.warn("拍了拍未知")
+                logger.warn(f"拍了拍未知")
                 self.to_user_id = ""
                 self.to_user_nickname = ""
 

@@ -204,7 +204,7 @@ class WcFerryChannel(ChatChannel):
 
         self.user_id = login_info["wxid"]
         self.name = login_info["name"]
-        logger.info(f"登录信息:>>>user_id:{self.user_id}>>>>>>>>name:{self.name}")
+        logger.info(f"\n\n登录信息:>>>user_id:{self.user_id}>>>>>>>>name:{self.name}\n\n")
 
         self.thread_run()
         # wcf 开始------------------------

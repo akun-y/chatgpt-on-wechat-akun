@@ -55,3 +55,4 @@ head-img/*
 merged-xxxx.jpg
 example.xlsx
 file_cache.json
+plugins/banwords/config.json
