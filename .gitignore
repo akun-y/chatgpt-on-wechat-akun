@@ -58,3 +58,5 @@ file_cache.json
 plugins/banwords/config.json
 config-xu.json
 config-szz.json
+.wcf.lock
+
