@@ -16,6 +16,9 @@ available_setting = {
     "open_ai_api_key": "",  # openai api key
     # openai apibase，当use_azure_chatgpt为true时，需要设置对应的api base
     "open_ai_api_base": "https://api.openai.com/v1",
+    "voice_openai_api_key": "",  # openai api key
+    "voice_openai_api_base": "",  # openai api base
+
     "proxy": "",  # openai使用的代理
     # chatgpt模型， 当use_azure_chatgpt为true时，其名称为Azure上model deployment名称
     "model": "gpt-3.5-turbo",  # 支持ChatGPT、Claude、Gemini、文心一言、通义千问、Kimi、讯飞星火、智谱、LinkAI等模型，模型具体名称详见common/const.py文件列出的模型

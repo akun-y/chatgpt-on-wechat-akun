@@ -4,6 +4,7 @@ CHATGPT = "chatGPT"
 BAIDU = "baidu"
 CHATGPTONAZURE = "chatGPTOnAzure"
 LINKAI = "linkai"
+CLAUDEAI = "claudeAI"
 XUNFEI = "xunfei"
 GEMINI = "gemini" # gemini-1.0-pro
 VERSION = "1.3.0"
