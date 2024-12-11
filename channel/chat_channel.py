@@ -82,7 +82,7 @@ class ChatChannel(Channel):
 
                 else:
                     if cmsg.is_at:
-                        logger.warning(f"[WX]虽然@bot，但[{group_name}] 不在白名单中，不回复")
+                        logger.warning(f"[WX]虽然@bot，但[{group_name}] 不在白名单中，不回复 {group_id}")
                     return None
                 context["session_id"] = session_id
                 context["receiver"] = group_id
