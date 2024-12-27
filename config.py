@@ -7,8 +7,6 @@ import pickle
 import copy
 import sys
 
-from common.log import logger
-
 # 将所有可用的配置项写在字典里, 请使用小写字母
 # 此处的配置值无实际意义，程序不会读取此处的配置，仅用于提示格式，请将配置加入到config.json中
 available_setting = {
@@ -244,20 +242,20 @@ class Config(dict):
         try:
             with open(os.path.join(get_appdata_dir(), "user_datas.pkl"), "rb") as f:
                 self.user_datas = pickle.load(f)
-                logger.info("[Config] User datas loaded.")
+                logging.info("[Config] User datas loaded.")
         except FileNotFoundError as e:
-            logger.info("[Config] User datas file not found, ignore.")
+            logging.info("[Config] User datas file not found, ignore.")
         except Exception as e:
-            logger.info("[Config] User datas error: {}".format(e))
+            logging.info("[Config] User datas error: {}".format(e))
             self.user_datas = {}
 
     def save_user_datas(self):
         try:
             with open(os.path.join(get_appdata_dir(), "user_datas.pkl"), "wb") as f:
                 pickle.dump(self.user_datas, f)
-                logger.info("[Config] User datas saved.")
+                logging.info("[Config] User datas saved.")
         except Exception as e:
-            logger.info("[Config] User datas error: {}".format(e))
+            logging.info("[Config] User datas error: {}".format(e))
 
 
 config = Config()
@@ -282,20 +280,21 @@ def drag_sensitive(config):
                         config_copy[key] = config_copy[key][0:3] + "*" * 5 + config_copy[key][-3:]
             return config_copy
     except Exception as e:
-        logger.exception(e)
+        logging.exception(e)
         return config
     return config
 
 
 def load_config():
     global config
-    config_path = "./config.json"
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(current_dir, "config.json")
     if not os.path.exists(config_path):
-        logger.info("配置文件不存在，将使用config-template.json模板")
-        config_path = "./config-template.json"
+        logging.info("配置文件不存在，将使用config-template.json模板")
+        config_path = os.path.join(current_dir, "config-template.json")
 
     config_str = read_file(config_path)
-    logger.debug("[INIT] config str: {}".format(drag_sensitive(config_str)))
+    logging.debug("[INIT] config str: {}".format(drag_sensitive(config_str)))
 
     # 将json字符串反序列化为dict类型
     config = Config(json.loads(config_str))
@@ -305,7 +304,7 @@ def load_config():
     for name, value in os.environ.items():
         name = name.lower()
         if name in available_setting:
-            logger.info("[INIT] override config by environ args: {}={}".format(name, value))
+            logging.info("[INIT] override config by environ args: {}={}".format(name, value))
             try:
                 config[name] = eval(value)
             except:
@@ -318,12 +317,12 @@ def load_config():
 
     # debug 从环境中获取时，可能为字符串'WARN'，所以需要判断
     if config.get("debug", False) == "DEBUG" or config.get("debug", False) == True:        
-        logger.remove()  # Remove the default logger
-        logger.add(sys.stderr, level="DEBUG") 
-        logger.debug("[INIT] set log level to DEBUG")
+        logging.remove()  # Remove the default logger
+        logging.add(sys.stderr, level="DEBUG") 
+        logging.debug("[INIT] set log level to DEBUG")
 
-    #logger.info("[INIT] load config: {}".format(drag_sensitive(config)))
-    logger.info("[Config] Config loaded {}".format(config.get("bot_name")))
+    #logging.info("[INIT] load config: {}".format(drag_sensitive(config)))
+    logging.info("[Config] Config loaded {}".format(config.get("bot_name")))
 
     config.load_user_datas()
 
@@ -344,7 +343,7 @@ def conf():
 def get_appdata_dir():
     data_path = os.path.join(get_root(), conf().get("appdata_dir", ""))
     if not os.path.exists(data_path):
-        logger.info("[INIT] data path not exists, create it: {}".format(data_path))
+        logging.info("[INIT] data path not exists, create it: {}".format(data_path))
         os.makedirs(data_path)
     return data_path
 

@@ -5,12 +5,13 @@ import time
 from queue import Empty
 from threading import Thread
 from common.log import logger
+from config import conf
 
 os.environ["ntchat_LOG"] = "ERROR"
 
 from wcferry import Wcf
 
-wcf = Wcf(debug=False)
+wcf = Wcf(debug=True if conf().get("debug") else False)
 
 
 def forever():

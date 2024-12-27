@@ -62,7 +62,7 @@ class TerminalChannel(ChatChannel):
 
     def startup(self):
         context = Context()
-        logger.setLevel("WARN")
+        logger.setLevel("DEBUG")
         print("\nPlease input your question:\nUser:", end="")
         sys.stdout.flush()
         msg_id = 0

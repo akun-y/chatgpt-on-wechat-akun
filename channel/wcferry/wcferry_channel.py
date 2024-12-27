@@ -189,7 +189,7 @@ class WcFerryChannel(ChatChannel):
         thread.start()
 
     def startup(self):
-        logger.info("等待登录······")
+        logger.info("等待微信登录······")
         login_info = wcf.get_user_info()
         self.__avatar_urls = self.getAllAvatarUrl()
 

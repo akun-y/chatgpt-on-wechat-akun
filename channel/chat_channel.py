@@ -177,6 +177,7 @@ class ChatChannel(Channel):
             pass
             # msg_text = content
         elif ctype == ContextType.MP:
+            logger.info(f"===>收到公众号消息: {content}")
             return
         elif ctype == ContextType.LEAVE_GROUP:
             pass

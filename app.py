@@ -4,9 +4,9 @@ import signal
 import sys
 
 from channel import channel_factory
+from common.log import set_logger
 from config import load_config
 from plugins import *
-
 
 def sigterm_handler_wrap(_signo):
     old_handler = signal.getsignal(_signo)
@@ -25,6 +25,8 @@ def run_app():
     try:
         # load config
         load_config()
+        # set logger
+        set_logger()
         # ctrl + c
         sigterm_handler_wrap(signal.SIGINT)
         # kill signal

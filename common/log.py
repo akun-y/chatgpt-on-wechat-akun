@@ -2,6 +2,8 @@ import os
 from loguru import logger
 import sys
 
+from config import conf
+
 # 确保 Python 环境使用 UTF-8 编码
 os.environ["PYTHONIOENCODING"] = "utf-8"
 
@@ -24,14 +26,16 @@ logger.warn = warn
 
 logger = logger
 
-def _reset_logger():
+def set_logger():
+    level = "DEBUG" if conf().get("debug") else "INFO"
+    print(f"set_logger level: {level}")
     # 配置日志记录器
     logger.remove()  # 移除默认的日志记录器
     # 添加控制台日志记录器，设置为 info 级别
     logger.add(
         sink=sys.stdout,
         format="<level>{level:.4} <blue>{time:HH:mm:ss}</blue> {message} </level><blue>[{file}:{line}]</blue>",
-        level="INFO",
+        level=level,
         colorize=True,  # 控制台日志彩色输出
     )
 
@@ -41,7 +45,7 @@ def _reset_logger():
         format="[{level}][{time:YYYY-MM-DD HH:mm:ss}] {message} [{file}:{line}]",
         rotation="1 day",  # 每天午夜轮换日志文件
         encoding="utf-8",
-        level="INFO",
+        level=level,
     )
 
     # 添加错误日志记录器，按日期命名，设置为 error 级别
@@ -53,4 +57,8 @@ def _reset_logger():
         encoding="utf-8",
     )
 
-_reset_logger()
+def _reset_logger(logger_instance):
+    """重置logger配置"""
+    set_logger()
+    return logger_instance
+
