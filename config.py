@@ -180,7 +180,7 @@ available_setting = {
     "use_linkai": False,
     "linkai_api_key": "",
     "linkai_app_code": "",
-     "accept_friend": False,  # 配置是否自动通过好友请求，随机延迟1-10秒
+     "accept_friend": True,  # 配置是否自动通过好友请求，随机延迟1-10秒
     "fast_gpt": False,  # 标识模型接口是否是fastgpt
     "ntchat_smart": True,  # 配置ntchat是否使用已登录微信，False为多开
     "wework_smart": True,  # 配置wework是否使用已登录微信，False为多开
@@ -317,8 +317,13 @@ def load_config():
 
     # debug 从环境中获取时，可能为字符串'WARN'，所以需要判断
     if config.get("debug", False) == "DEBUG" or config.get("debug", False) == True:        
-        logging.remove()  # Remove the default logger
-        logging.add(sys.stderr, level="DEBUG") 
+        # 清除所有日志处理器
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+        # 设置日志级别为DEBUG
+        logging.basicConfig(level=logging.DEBUG, 
+                          handlers=[logging.StreamHandler(sys.stderr)],
+                          format='%(asctime)s - %(levelname)s - %(message)s')
         logging.debug("[INIT] set log level to DEBUG")
 
     #logging.info("[INIT] load config: {}".format(drag_sensitive(config)))
