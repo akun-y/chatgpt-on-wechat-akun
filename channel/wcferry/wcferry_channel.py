@@ -8,6 +8,8 @@ import threading
 import uuid
 import xml.dom.minidom
 import requests
+import tempfile
+import time
 
 from PIL import Image
 from bridge.context import *
@@ -354,7 +356,27 @@ class WcFerryChannel(ChatChannel):
                 wcf.send_file(video_path, receiver)
             logger.info("[WX] sendVideo, receiver={}".format(receiver))
         elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
-            wcf.send_image(reply.content, receiver)
+            if isinstance(reply.content, io.BytesIO):
+                # 将 BytesIO 对象转换为本地文件                
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+                temp_file.write(reply.content.getvalue())  # 使用 getvalue() 获取字节内容
+                temp_file.close()  # 确保文件被正确关闭
+                temp_file_path = temp_file.name
+                try:
+                    wcf.send_image(temp_file_path, receiver)
+                finally:
+                    # 发送完成后尝试删除临时文件
+                    try:
+                        # 添加短暂延时，等待文件释放
+                        time.sleep(1)  
+                        if os.path.exists(temp_file_path):
+                            os.unlink(temp_file_path)
+                    except PermissionError:
+                        logger.warning(f"[WX] 无法立即删除临时文件 {temp_file_path}，文件可能仍在使用中")
+                    except Exception as e:
+                        logger.warning(f"[WX] 删除临时文件时发生错误: {str(e)}")
+            else:
+                wcf.send_image(reply.content, receiver)
             logger.info("[WX] sendImage, receiver={}".format(receiver))
         elif reply.type == ReplyType.VIDEO:  # 发送文件
             wcf.send_video(reply.content, receiver)
