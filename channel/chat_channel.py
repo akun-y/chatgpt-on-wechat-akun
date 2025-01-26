@@ -330,6 +330,8 @@ class ChatChannel(Channel):
                     pass
                 elif reply.type == ReplyType.VIDEO_URL:
                     pass
+                elif reply.type == ReplyType.VIDEO:
+                    pass
                 elif reply.type == ReplyType.CARD:
                     pass
                 elif reply.type == ReplyType.InviteRoom:

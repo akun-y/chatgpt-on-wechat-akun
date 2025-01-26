@@ -379,7 +379,7 @@ class WcFerryChannel(ChatChannel):
                 wcf.send_image(reply.content, receiver)
             logger.info("[WX] sendImage, receiver={}".format(receiver))
         elif reply.type == ReplyType.VIDEO:  # 发送文件
-            wcf.send_video(reply.content, receiver)
+            wcf.send_file(reply.content, receiver)
             logger.info("[WX] sendFile={}, receiver={}".format(reply.content, receiver))
         elif reply.type == ReplyType.FILE:  # 发送文件
             wcf.send_file(reply.content, receiver)
