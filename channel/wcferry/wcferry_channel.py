@@ -409,16 +409,17 @@ class WcFerryChannel(ChatChannel):
         elif reply.type == ReplyType.LINK:
             # wcf.send_xml(reply.content, receiver)
             jsonObj = json.loads(reply.content)
-            wcf.send_rich_text(
+            ret = wcf.send_rich_text(
                 name=jsonObj["name"],
                 account=jsonObj["account"],
                 title=jsonObj["title"],
                 digest=jsonObj["digest"],
                 url=jsonObj["url"],
-                thumburl=jsonObj["thumburl"],
+                thumburl='', #jsonObj["thumburl"],某个版本的wcferry 不支持thumburl
                 receiver=receiver,
             )
-            logger.info("[WX] sendLink={}, receiver={}".format(reply.content, receiver))
+            logger.info("[WX] sendLink={}, receiver={},ret = {}".format(reply.content, receiver,ret))
+            logger.info(jsonObj)
         elif reply.type == ReplyType.XML:
             wcf.send_xml(receiver, reply.content, 11061)
             logger.info("[WX] sendXML={}, receiver={}".format(reply.content, receiver))
