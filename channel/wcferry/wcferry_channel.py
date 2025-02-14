@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import io
 import json
 import os.path
@@ -30,7 +31,7 @@ from wcferry.roomdata_pb2 import RoomData
 
 from plugins.plugin_manager import PluginManager
 
-
+# 下载文件,并压缩图片,使用文件hash进行保存,如果下次遇到相同文件,那就免去下载步骤
 def download_and_compress_image(url, filename, quality=80):
     # 确定保存图片的目录
     directory = os.path.join(os.getcwd(), "tmp", "images")
@@ -40,12 +41,18 @@ def download_and_compress_image(url, filename, quality=80):
 
     # 下载图片
     response = requests.get(url)
+    # 打开图片
     image = Image.open(io.BytesIO(response.content))
+    # 计算文件哈希
+    file_hash = hashlib.sha256(response.content).hexdigest()
+    image_path = os.path.join(directory, f"{file_hash}.{image.format}")
 
-    # 压缩图片
-    image_path = os.path.join(directory, f"{filename}.jpg")
-    image.save(image_path, "JPEG", quality=quality)
+    # 检查文件是否已经存在
+    if os.path.exists(image_path):
+        return image_path
 
+    # 压缩图片并保存
+    image.save(image_path,image.format, quality=quality)
     return image_path
 
 
@@ -58,17 +65,22 @@ def download_video(url, filename):
 
     # 下载视频
     response = requests.get(url, stream=True)
+    # 计算文件哈希
+    file_hash = hashlib.sha256(response.content).hexdigest()
+    video_path = os.path.join(directory, f"{file_hash}.mp4")
+    
+    # 检查文件是否已经存在
+    if os.path.exists(video_path):
+        return video_path
+    
     total_size = 0
-
-    video_path = os.path.join(directory, f"{filename}.mp4")
-
     with open(video_path, "wb") as f:
         for block in response.iter_content(1024):
             total_size += len(block)
 
             # 如果视频的总大小超过30MB (30 * 1024 * 1024 bytes)，则停止下载并返回
             if total_size > 300 * 1024 * 1024:
-                logger.info("[WX] Video is larger than 30MB, skipping...")
+                logger.error("[WX] Video is larger than 30MB, skipping...")
                 return None
 
             f.write(block)
