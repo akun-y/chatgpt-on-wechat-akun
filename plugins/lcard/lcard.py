@@ -133,7 +133,7 @@ class lcard(Plugin):
     <appname>QQ音乐</appname>
 </appinfo>
 </msg>"""
-                _set_reply_text(card_app, e_context, level=ReplyType.LINK)
+                _set_reply_text(card_app, e_context, level=ReplyType.XML)
                 return
             else:
                 _set_reply_text("未找到该歌曲", e_context, level=ReplyType.TEXT)
@@ -160,7 +160,7 @@ class lcard(Plugin):
                     weather_url = "https://www.msn.cn/zh-cn/weather/"
                     image_url = "https://mmbiz.qpic.cn/mmbiz_jpg/xuic5bNARavt67O3KvoXqjJJanKwRkfIiaJT6Oiavia0icVgC9DWInofCKA655AuicqgdBukd36nFXTqHBUUvfc0uCCQ/300?wxtype=jpeg&amp;wxfrom=401"
                     xml_link = fun.get_xml(to_user_id,weather_url, gh_id, username, title, desc, image_url)
-                    _set_reply_text(xml_link, e_context, level=ReplyType.LINK)
+                    _set_reply_text(xml_link, e_context, level=ReplyType.XML)
                     return
                 else:
                     _set_reply_text("请按格式输入：城市+天气\n例如：北京天气", e_context, level=ReplyType.TEXT)

@@ -146,7 +146,7 @@ def on_recv_text_msg(wechat_instance, message):
             args=(encryptusername, ticket, int(scene)),
         ).start()
     else:
-        logger.debug("ntchat未开启自动同意好友申请")
+        logger.debug("wcferry未开启自动同意好友申请")
 
 
 @singleton
@@ -433,8 +433,14 @@ class WcFerryChannel(ChatChannel):
             logger.info("[WX] sendLink={}, receiver={},ret = {}".format(reply.content, receiver,ret))
             logger.info(jsonObj)
         elif reply.type == ReplyType.XML:
-            wcf.send_xml(receiver, reply.content, 11061)
-            logger.info("[WX] sendXML={}, receiver={}".format(reply.content, receiver))
+            ttt = wcf.get_msg_types()
+            print("--------------------------------")
+            print(ttt)
+            print("--------------------------------")
+           # xml2 = "<?xml version=\"1.0\"?><msg><appmsg appid=\"\" sdkver=\"0\"><title>叮当药房，24小时服务，28分钟送药到家！</title><des>叮当快药首家承诺范围内28分钟送药到家！叮当快药核心区域内7*24小时全天候服务，送药上门！叮当快药官网为您提供快捷便利，正品低价，安全放心的购药、送药服务体验。</des><action>view</action><type>33</type><showtype>0</showtype><content /><url>https://mp.weixin.qq.com/mp/waerrpage?appid=wxc2edadc87077fa2a&amp;type=upgrade&amp;upgradetype=3#wechat_redirect</url><dataurl /><lowurl /><lowdataurl /><recorditem /><thumburl /><messageaction /><md5>7f6f49d301ebf47100199b8a4fcf4de4</md5><extinfo /><sourceusername>gh_c2b88a38c424@app</sourceusername><sourcedisplayname>叮当快药 药店送药到家夜间买药</sourcedisplayname><commenturl /><appattach><totallen>0</totallen><attachid /><emoticonmd5></emoticonmd5><fileext>jpg</fileext><filekey>da0e08f5c7259d03da150d5e7ca6d950</filekey><cdnthumburl>3057020100044b30490201000204e4c0232702032f4ef20204a6bace6f02046401f62d042430326337303430352d333734332d343362652d623335322d6233333566623266376334620204012400030201000405004c537600</cdnthumburl><aeskey>0db26456caf243fbd4efb99058a01d66</aeskey><cdnthumbaeskey>0db26456caf243fbd4efb99058a01d66</cdnthumbaeskey><encryver>1</encryver><cdnthumblength>61558</cdnthumblength><cdnthumbheight>100</cdnthumbheight><cdnthumbwidth>100</cdnthumbwidth></appattach><weappinfo><pagepath>pages/index/index.html</pagepath><username>gh_c2b88a38c424@app</username><appid>wxc2edadc87077fa2a</appid><version>197</version><type>2</type><weappiconurl>http://wx.qlogo.cn/mmhead/Q3auHgzwzM4727n0NQ0ZIPQPlfp15m1WLsnrXbo1kLhFGcolgLyc0A/96</weappiconurl><appservicetype>0</appservicetype><shareId>1_wxc2edadc87077fa2a_29177e9a9b918cb9e75964f80bb8f32e_1677849476_0</shareId></weappinfo><websearch /></appmsg><fromusername>wxid_eob5qfcrv4zd22</fromusername><scene>0</scene><appinfo><version>1</version><appname /></appinfo><commenturl /></msg>"
+            xml2 = '<?xml version="1.0"?>\n<msg>\n\t<appmsg appid="wx32540bd863b27570" sdkver="">\n\t\t<title>拼多多</title>\n\t\t<des>拼多多</des>\n\t\t<action>view</action>\n\t\t<type>33</type>\n\t\t<showtype>0</showtype>\n\t\t<content />\n\t\t<url>https://mp.weixin.qq.com/mp/waerrpage?appid=wx32540bd863b27570&amp;amp;type=upgrade&amp;amp;upgradetype=3#wechat_redirect</url>\n\t\t<dataurl />\n\t\t<lowurl />\n\t\t<lowdataurl />\n\t\t<recorditem />\n\t\t<thumburl>http://mmbiz.qpic.cn/mmbiz_png/I3ht2WMGrPjkBVPwWLHt9LbsXHnXaHKuT6LmFDpvV7jcJSEibYrN1Wc5SpVhRUXxv1vJyCgVETh7m9RRMzYLSiag/640?wx_fmt=png&amp;wxfrom=200</thumburl>\n\t\t<messageaction />\n\t\t<laninfo />\n\t\t<extinfo />\n\t\t<sourceusername />\n\t\t<sourcedisplayname>拼多多</sourcedisplayname>\n\t\t<commenturl />\n\t\t<appattach>\n\t\t\t<totallen>0</totallen>\n\t\t\t<attachid />\n\t\t\t<emoticonmd5></emoticonmd5>\n\t\t\t<fileext />\n\t\t\t<aeskey></aeskey>\n\t\t</appattach>\n\t\t<webviewshared>\n\t\t\t<publisherId />\n\t\t\t<publisherReqId>0</publisherReqId>\n\t\t</webviewshared>\n\t\t<weappinfo>\n\t\t\t<pagepath />\n\t\t\t<username>gh_0e7477744313@app</username>\n\t\t\t<appid />\n\t\t\t<type>1</type>\n\t\t\t<appservicetype>0</appservicetype>\n\t\t\t<shareId>2_wx32540bd863b27570_10221255_1739953303_1</shareId>\n\t\t</weappinfo>\n\t\t<websearch />\n\t</appmsg>\n\t<fromusername>yinghk</fromusername>\n\t<scene>0</scene>\n\t<appinfo>\n\t\t<version>7</version>\n\t\t<appname>拼多多</appname>\n\t</appinfo>\n\t<commenturl />\n</msg>\n'
+            ret = wcf.send_xml(receiver, xml2, 49)
+            logger.info("[WX] sendXML={}, receiver={},ret = {}".format(reply.content, receiver,ret))
         # elif reply.type == ReplyType.RICH_TEXT:
         #     # self, name: str, account: str, title: str, digest: str, url: str, thumburl: str, receiver: str) -> int:
         #     wcf.send_rich_text(

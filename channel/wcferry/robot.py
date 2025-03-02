@@ -4,6 +4,7 @@ import logging
 import re
 import threading
 import time
+import traceback
 import xml.etree.ElementTree as ET
 from queue import Empty
 from threading import Thread
@@ -113,6 +114,10 @@ class Robot:
                 self.msgHandler(self.wcf, msg)
         elif msg.type == 0x03:  # 私聊图片消息
             self.msgHandler(self.wcf, msg)
+        elif msg.type == 49:  # 共享实时位置、文件、转账、链接
+            logger.warning(f"收到消息类型：{msg.type}")
+        else:
+            logger.warn(f"收到消息类型：{msg.type}")
 
     def onMsg(self, msg: WxMsg) -> int:
         try:
@@ -137,6 +142,7 @@ class Robot:
                     continue  # Empty message
                 except Exception as e:
                     logger.error(f"Receiving message error: {e}")
+                    logger.error(traceback.format_exc())
 
         self.wcf.enable_receiving_msg()
         Thread(
@@ -185,6 +191,7 @@ class Robot:
             v4 = xml.attrib["ticket"]
             scene = int(xml.attrib["scene"])
             self.wcf.accept_new_friend(v3, v4, scene)
+            logger.warn(f"同意好友请求：{v3}，{v4}，{scene}")
 
         except Exception as e:
             logger.error(f"同意好友出错：{e}")
