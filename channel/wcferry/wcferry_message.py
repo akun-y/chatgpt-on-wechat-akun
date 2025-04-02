@@ -31,7 +31,9 @@ def process_payment_info(text):
 def get_emoji_file(xmlContent):
     root = ET.XML(xmlContent)
     emoji = root.find("emoji")
-    url = emoji.get("cdnurl")
+    if emoji is None :
+        return
+    url = emoji.get("cdnurl")    
     filename = emoji.get("md5")
     if url is None or filename is None:
         path = "发送了一张本地图片"
@@ -240,6 +242,7 @@ class WcFerryMessage(ChatMessage):
                     img_dir = os.path.join(self.tmp_dir, "images")
                     if not os.path.exists(img_dir):
                         os.makedirs(img_dir)
+                    image_path = None
                     cnt = 0
                     while cnt < 30:
                         image_path = self.scf.decrypt_image(data.extra, img_dir)
@@ -296,7 +299,8 @@ class WcFerryMessage(ChatMessage):
                 self.ctype = ContextType.XML
                 xml = ET.XML(data.content)
                 location = xml.find("location")
-                self.content = location.get("label") + " " + location.get("poiname")
+                if location:
+                    self.content = location.get("label",'') + " " + location.get("poiname",'')
                 # self.content = data.extra
             elif wechat_msg.type == 49:  # 需要缓存文件的消息类型
                 self.ctype = ContextType.FILE
@@ -318,7 +322,12 @@ class WcFerryMessage(ChatMessage):
                 from_wxid = data["from_wxid"]
                 root = ET.XML(xmlContent)
                 appmsg = root.find("appmsg")
+                # 检查appmsg是否为None
+                if appmsg is None:
+                    return
                 msg = appmsg.find("des")
+                if msg is None :
+                    return
                 # type = appmsg.find("type")
                 name = root.find(".//mmreader/category/name")
                 name_text = name.text if name is not None else None
@@ -401,7 +410,7 @@ class WcFerryMessage(ChatMessage):
                 f"WcFerryMessage has be en successfully instantiated with message id: {self.msg_id}"
             )
         except Exception as e:
-            logger.error(f"在 WechatMessage 的初始化过程中出现错误：{e} {data.content}")
+            logger.error(f"在 WechatMessage 的初始化过程中出现错误：{e} ")
             raise e
 
     def proc_sys_wechat_msg(self, data):
@@ -435,6 +444,8 @@ class WcFerryMessage(ChatMessage):
         elif "加入了群聊" in data.content or "加入群聊" in data.content:
             names = extract_invite_names(data.content)
             if names:
+                _name = None
+                _user_id= None
                 if len(names) >= 2:
                     
                     self.actual_user_id = self.channel.get_room_member_wxid(
@@ -455,11 +466,11 @@ class WcFerryMessage(ChatMessage):
                     _name = names[0]
                     _user_id = self.channel.get_room_member_wxid(
                         data.roomid, _name
-                    ) or self.channel.get_user_wxid_by_name(name)
+                    ) or self.channel.get_user_wxid_by_name(_name)
                     
                     self.actual_user_nickname = _name
                     self.actual_user_id = _user_id
-                    
+                
                 self.channel.add_room_member(data.roomid,_name,_user_id)
                 
             self.ctype = ContextType.JOIN_GROUP
@@ -603,14 +614,18 @@ class WcFerryMessage(ChatMessage):
             root = ET.fromstring(xmlContent)
 
             # 获取type
-            type = root.find(".//sec_msg_node/type").text
+            t =root.find(".//sec_msg_node/type")
+            if t is None :
+                return
+            type = t.text
 
             appmsg = root.find("appmsg")
-            if not appmsg:
+            if appmsg is None:
                 logger.error(f"收到引用类消息,未处理:{xmlContent}")
                 return
             msg = appmsg.find("title")
             type = appmsg.find("type")
+            if type is None :return
             if type.text == "51":  # 视频号视频
                 self.content = xmlContent
                 self.ctype = ContextType.WECHAT_VIDEO
@@ -641,31 +656,33 @@ class WcFerryMessage(ChatMessage):
             else:
                 # 引用消息类型
                 refermsg = appmsg.find("refermsg")
+                if refermsg is None : return
                 refwxid = refermsg.find("chatusr")
                 refname = refermsg.find("displayname")
+                if refname is None: return
                 refname_text = refname.text
-                if refermsg is not None:
-                    if self.is_group:
-                        # room_members = load_json_from_file(
-                        #     directory, "wcferry_room_members.json"
-                        # )
-                        # self.actual_user_nickname = get_display_name_or_nickname(
-                        #     room_members, data.roomid, self.from_user_id
-                        # )
-                        self.actual_user_nickname = self.channel.get_user_name(
-                            self.from_user_ids
-                        )
-                        self.content = msg.text
-                        self.to_user_id = refwxid.text
-                        self.ctype = ContextType.QUOTE
-                        self.to_user_nickname = refname_text
-                        if self.to_user_id is None:
-                            self.to_user_id = self.from_user_id
-                        print(
-                            f"【{self.actual_user_nickname}】 ID:{self.from_user_id}  引用了 【{self.to_user_nickname}】 ID:{self.to_user_id} 的信息并回复 【{self.content}】"
-                        )
-                else:
-                    pass
+                # if refermsg is not None:
+                #     if self.is_group:
+                #         # room_members = load_json_from_file(
+                #         #     directory, "wcferry_room_members.json"
+                #         # )
+                #         # self.actual_user_nickname = get_display_name_or_nickname(
+                #         #     room_members, data.roomid, self.from_user_id
+                #         # )
+                #         self.actual_user_nickname = self.channel.get_user_name(
+                #             self.from_user_ids
+                #         )
+                #         self.content = msg.text
+                #         self.to_user_id = refwxid.text
+                #         self.ctype = ContextType.QUOTE
+                #         self.to_user_nickname = refname_text
+                #         if self.to_user_id is None:
+                #             self.to_user_id = self.from_user_id
+                #         print(
+                #             f"【{self.actual_user_nickname}】 ID:{self.from_user_id}  引用了 【{self.to_user_nickname}】 ID:{self.to_user_id} 的信息并回复 【{self.content}】"
+                #         )
+                # else:
+                #     pass
         except Exception as e:
             logger.error("proc_quoted_wechat_msg:", e)
 
