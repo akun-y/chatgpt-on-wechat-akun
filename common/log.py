@@ -1,5 +1,5 @@
 import os
-from loguru import logger
+from loguru import logger as logger_instance
 import sys
 
 from config import conf
@@ -14,7 +14,7 @@ def warn(*args, **kwargs):
 
 
 # 将 warn 函数添加到 logger 对象中
-logger.warn = warn
+logger_instance.warn = warn
 
 # 示例日志记录
 # logger.info("这是一个信息日志")
@@ -22,7 +22,7 @@ logger.warn = warn
 # logger.warning('This is a warning message')
 # logger.warn('This is another warning message')  # 使用别名记录告日志
 
-logger = logger
+logger = logger_instance
 
 def set_logger():
     level = "DEBUG" if conf().get("debug") == True else "INFO"

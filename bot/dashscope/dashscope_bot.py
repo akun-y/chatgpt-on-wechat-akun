@@ -26,7 +26,7 @@ class DashscopeBot(Bot):
         self.sessions = SessionManager(DashscopeSession, model=conf().get("model") or "qwen-plus")
         self.model_name = conf().get("model") or "qwen-plus"
         self.api_key = conf().get("dashscope_api_key")
-        os.environ["DASHSCOPE_API_KEY"] = self.api_key
+        os.environ["DASHSCOPE_API_KEY"] = self.api_key or ''
         self.client = dashscope.Generation
 
     def reply(self, query, context=None):

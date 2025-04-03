@@ -211,6 +211,7 @@ class Godcmd(Plugin):
         self.isrunning = True  # 机器人是否运行中
         global_config["admin_users"] = self.admin_users # 全局ntchat管理员ID
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
+        self.prefix_cmd = gconf["prefix_cmd"] or "#"
         logger.info("[Godcmd] inited")
 
     def on_handle_context(self, e_context: EventContext):
@@ -223,8 +224,13 @@ class Godcmd(Plugin):
         content = e_context["context"].content
         user_id = e_context['context']['msg'].from_user_id
         logger.debug("[Godcmd] on_handle_context. content: %s" % content)
-        if content.startswith("#"):
-            if len(content) == 1:
+        
+        if any(content.startswith(item) for item in self.prefix_cmd):
+            # 获取匹配的前缀
+            prefix = next(item for item in self.prefix_cmd if content.startswith(item))
+            cmd_len = len(prefix)
+            content = content[cmd_len:]  # 去除前缀内容
+            if len(content) <= cmd_len:
                 reply = Reply()
                 reply.type = ReplyType.INFO
                 reply.content = f"""空指令，输入#help查看指令列表"""
@@ -243,7 +249,7 @@ class Godcmd(Plugin):
             bottype = Bridge().get_bot_type("chat")
             bot = Bridge().get_bot("chat")
             # 将命令和参数分割
-            command_parts = content[1:].strip().split()
+            command_parts = content.strip().split()
             cmd = command_parts[0]
             args = command_parts[1:]
             isadmin = False
@@ -450,7 +456,7 @@ class Godcmd(Plugin):
                 trigger_prefix = conf().get("plugin_trigger_prefix", "$")
                 if trigger_prefix == "#":  # 跟插件聊天指令前缀相同，继续递交
                     return
-                ok, result = False, f"未知指令：{cmd}\n查看指令列表请输入#help"
+                ok, result = False, f"未知指令：{cmd}\n查看指令列表请输入#help"                
 
             reply = Reply()
             if ok:
