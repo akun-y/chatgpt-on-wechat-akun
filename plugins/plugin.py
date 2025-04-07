@@ -41,5 +41,5 @@ class Plugin:
         except Exception as e:
             logger.warn("save plugin config failed: {}".format(e))
 
-    def get_help_text(self, **kwargs):
+    def get_help_text(self, **kwargs)->str:
         return "暂无帮助信息"
