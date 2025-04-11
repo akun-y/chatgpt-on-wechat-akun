@@ -411,6 +411,9 @@ class WcFerryMessage(ChatMessage):
             )
         except Exception as e:
             logger.error(f"在 WechatMessage 的初始化过程中出现错误：{e} ")
+            
+            logger.error(self.scf)
+            logger.error(self.login_info)
             raise e
 
     def proc_sys_wechat_msg(self, data):
