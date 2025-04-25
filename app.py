@@ -1,12 +1,13 @@
 # encoding:utf-8
 
+import os
 import signal
 import sys
-
+from common.log import logger
 from channel import channel_factory
 from common.log import set_logger
-from config import load_config
-from plugins import *
+from config import conf, load_config
+from plugins.plugin_manager import PluginManager
 
 def sigterm_handler_wrap(_signo):
     old_handler = signal.getsignal(_signo)
@@ -39,7 +40,7 @@ def run_app():
             channel_name = "terminal"
 
         channel = channel_factory.create_channel(channel_name)
-        if channel_name in ["wcferry","ntchat", "wework", "weworktop"]:
+        if channel_name in ["wcferry","ntchat", "wework", "weworktop",'wechatmp_service','wechatmp']:
             PluginManager().load_plugins()
 
         # startup channel
