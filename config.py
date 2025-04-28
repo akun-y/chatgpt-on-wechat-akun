@@ -31,7 +31,7 @@ available_setting = {
     "group_chat_prefix": ["@bot"],  # 群聊时包含该前缀则会触发机器人回复
     "group_chat_suffix": ["bot"],
     "group_chat_reply_prefix": "",  # 群聊时自动回复的前缀
-    "group_chat_reply_suffix": "",  # 群聊时自动回复的后缀，\n 可以换行    
+    "group_chat_reply_suffix": "",  # 群聊时自动回复的后缀，\n 可以换行
     "group_chat_keyword": [],  # 群聊时包含该关键词则会触发机器人回复
     "group_at_off": False,  # 是否关闭群聊时@bot的触发
     "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"],  # 开启自动回复的群名称列表
@@ -156,10 +156,10 @@ available_setting = {
     "feishu_token": "",  # 飞书 verification token
     "feishu_bot_name": "",  # 飞书机器人的名字
     # 钉钉配置
-    "dingtalk_client_id": "",  # 钉钉机器人Client ID 
+    "dingtalk_client_id": "",  # 钉钉机器人Client ID
     "dingtalk_client_secret": "",  # 钉钉机器人Client Secret
     "dingtalk_card_enabled": False,
-    
+
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
     # channel配置
@@ -199,11 +199,12 @@ available_setting = {
     "system_name": "iKnow-on-wechat",
     "iknow_reg_url": "http://192.168.15.223:8080/#pages/reg",
     "iknow_recharge_url": "http://192.168.15.223:8080/#pages/recharge",
-    
+
     "groupx_url": "https://groupx.mfull.cn",
     "groupx_username":"",
     "groupx_password":"",
-    'restart_time': "01:00"  # 每天重启时间，格式为HH:MM
+    "restart_time": "01:00",  # 每天重启时间，格式为HH:MM
+    "restart_enabled": True   # 是否启用自动重启功能
 }
 
 
@@ -319,12 +320,12 @@ def load_config():
                     config[name] = value
 
     # debug 从环境中获取时，可能为字符串'WARN'，所以需要判断
-    if config.get("debug", False) == "DEBUG" or config.get("debug", False) == True:        
+    if config.get("debug", False) == "DEBUG" or config.get("debug", False) == True:
         # 清除所有日志处理器
         for handler in logging.root.handlers[:]:
             logging.root.removeHandler(handler)
         # 设置日志级别为DEBUG
-        logging.basicConfig(level=logging.DEBUG, 
+        logging.basicConfig(level=logging.DEBUG,
                           handlers=[logging.StreamHandler(sys.stderr)],
                           format='%(asctime)s - %(levelname)s - %(message)s')
         logging.debug("[INIT] set log level to DEBUG")
