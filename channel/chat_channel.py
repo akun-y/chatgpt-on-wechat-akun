@@ -13,6 +13,7 @@ from channel.channel import Channel
 from common.dequeue import Dequeue
 from config import conf, config
 from plugins import *
+from common.log import logger
 
 try:
     from voice.audio_convert import any_to_wav
