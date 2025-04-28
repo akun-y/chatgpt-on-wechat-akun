@@ -202,7 +202,8 @@ available_setting = {
     
     "groupx_url": "https://groupx.mfull.cn",
     "groupx_username":"",
-    "groupx_password":""
+    "groupx_password":"",
+    'restart_time': "01:00"  # 每天重启时间，格式为HH:MM
 }
 
 
