@@ -197,16 +197,14 @@ class WeworkChannel(ChatChannel):
         for room in rooms['room_list']:
             # 获取聊天室ID
             room_wxid = room['conversation_id']
-
             # 获取聊天室成员
             room_members = wework.get_room_members(room_wxid)
-
             # 将聊天室成员保存到结果字典中
             result[room_wxid] = room_members
-
         # 将结果保存到json文件中
         with open(os.path.join(directory, 'wework_room_members.json'), 'w', encoding='utf-8') as f:
             json.dump(result, f, ensure_ascii=False, indent=4)
+        self.all_room_members = result
         logger.info("wework程序初始化完成········")
         run.forever()
 
@@ -255,9 +253,19 @@ class WeworkChannel(ChatChannel):
         if reply.type == ReplyType.TEXT or reply.type == ReplyType.TEXT_:
             match = re.search(r"^@(.*?)\n", reply.content)
             if match:
-                new_content = re.sub(r"^@(.*?)\n", "\n", reply.content)
-                wxid_list = [session_id]
-                wework.send_room_at_msg(receiver, new_content, wxid_list)
+                # 提取@的用户名
+                name = match.group(1)  # 获取第一个组的内容，即名字                
+                wxid = get_wxid_by_name(self.all_room_members, receiver, name)
+                if wxid:
+                    new_content = reply.content.replace(f"@{name}", "")
+                    #wxid_list = [actual_user_id for actual_user_id in match.group(1).split()]
+                    wxid_list = [wxid]
+                    wework.send_room_at_msg(receiver, new_content, wxid_list)                    
+                else:
+                    wework.send_text(receiver, reply.content)
+                # wxid_list = [actual_user_id for actual_user_id in match.group(1).split()]
+                # wework.send_room_at_msg(receiver, new_content, wxid_list)
+                #wework.send_room_at_msg(receiver, new_content,[self.user_id])
             else:
                 wework.send_text(receiver, reply.content)
             logger.info("[WX] sendMsg={}, receiver={}".format(reply, receiver))

@@ -197,8 +197,8 @@ class WcFerryMessage(ChatMessage):
 
             # 获取一些可能多次使用的值
             self.login_info = self.scf.get_user_info()
-            self.nickname = self.login_info["name"]
-            self.user_id = self.login_info["wxid"]
+            self.nickname = channel.name
+            self.user_id = channel.user_id
 
             self.tmp_dir = os.path.join(os.getcwd(), "tmp")
             # 从文件读取数据，并构建以 wxid 为键的字典
