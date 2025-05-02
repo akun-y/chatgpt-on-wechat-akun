@@ -31,6 +31,8 @@ from wcferry.roomdata_pb2 import RoomData
 
 from plugins.plugin_manager import PluginManager
 
+from typing import TypedDict, Dict
+
 # 下载文件,并压缩图片,使用文件hash进行保存,如果下次遇到相同文件,那就免去下载步骤
 def download_and_compress_image(url, filename, quality=80):
     # 确定保存图片的目录
@@ -453,7 +455,7 @@ class WcFerryChannel(ChatChannel):
         #         receiver=receiver,
         #     )
 
-    # 獲取所有用戶的頭像url
+    # 获取所有用户的头像url
     def getAllAvatarUrl(self):
         data = wcf.query_sql(
             "MicroMsg.db",
@@ -463,15 +465,23 @@ class WcFerryChannel(ChatChannel):
         return {contact["usrName"]: contact["bigHeadImgUrl"] for contact in data}
 
     # 获取通信录,包含个人及微信群
-    def getAllContacts(self) -> dict:
+    def getAllContacts(self) -> Dict[str, ContactInfo]:
+        """获取联系人（包括好友、公众号、服务号、群成员……）
+        
+        Returns:
+            Dict[str, ContactInfo]: 返回一个字典，其中:
+                - 键为联系人的wxid(str)
+                - 值为包含联系人详细信息的ContactInfo字典，可能包含以下字段：
+                    - name: 昵称
+                    - code: 代码
+                    - remark: 备注
+                    - country: 国家
+                    - province: 省份
+                    - city: 城市
+                    - gender: 性别
+                    - alias: 别名
+                    - avatar: 头像URL
         """
-        获取联系人（包括好友、公众号、服务号、群成员……）
-        格式: {"wxid": "NickName"}
-        """
-        # contacts = wcf.query_sql(
-        #     "MicroMsg.db", "SELECT UserName, NickName FROM Contact LIMIT 1000;"
-        # )
-        # return {contact["UserName"]: contact["NickName"] for contact in contacts}
         contracts = {}
         for contact in wcf.get_contacts():
             # 微信群也加入到通讯录中:
