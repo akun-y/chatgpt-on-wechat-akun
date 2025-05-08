@@ -451,6 +451,7 @@ class Godcmd(Plugin):
                             ok, result = PluginManager().update_plugin(args[0])
                     logger.debug("[Godcmd] admin command: %s by %s" % (cmd, user))
                 else:
+                    logger.warn(f"需要管理员权限才能执行该指令 {user}")
                     ok, result = False, "需要管理员权限才能执行该指令"
             else:
                 trigger_prefix = conf().get("plugin_trigger_prefix", "$")

@@ -246,16 +246,29 @@ class WechatMPChannel(ChatChannel):
                 logger.info("[wechatmp] Do send image to {}".format(receiver))
             elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
                 image_storage = reply.content
-                image_storage.seek(0)
-                image_type = imghdr.what(image_storage)
-                filename = receiver + "-" + str(context["msg"].msg_id) + "." + image_type
-                content_type = "image/" + image_type
+                
+                # 检查 reply.content 是字符串还是文件句柄
+                if isinstance(image_storage, str):
+                    # 如果是字符串，是文件路径
+                    logger.info("[wechatmp] reply.content is a string, treating as file path or content")
+                    image_storage = open(image_storage, "rb")
+                    image_type = imghdr.what(image_storage)
+                    filename = receiver + "-" + str(context["msg"].msg_id) + "." + image_type
+                    content_type = "image/" + image_type
+                elif isinstance(image_storage, (io.IOBase, io.BufferedReader, io.BytesIO)):
+                    # 如果是文件句柄，将其重新定位到文件开头                
+                    image_storage.seek(0)
+                    image_type = imghdr.what(image_storage)
+                    filename = receiver + "-" + str(context["msg"].msg_id) + "." + image_type
+                    content_type = "image/" + image_type
+                    
                 try:
                     response = self.client.media.upload("image", (filename, image_storage, content_type))
                     logger.debug("[wechatmp] upload image response: {}".format(response))
                 except WeChatClientException as e:
                     logger.error("[wechatmp] upload image failed: {}".format(e))
                     return
+                
                 self.client.message.send_image(receiver, response["media_id"])
                 logger.info("[wechatmp] Do send image to {}".format(receiver))
             elif reply.type == ReplyType.VIDEO_URL:  # 从网络下载视频
@@ -302,3 +315,6 @@ class WechatMPChannel(ChatChannel):
         if self.passive_reply:
             assert session_id not in self.cache_dict
             self.running.remove(session_id)
+
+    def  get_user_by_wxid(self, wxid):
+        return self.client.user.get(wxid);

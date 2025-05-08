@@ -4,7 +4,7 @@ from bridge.context import ContextType
 from channel.chat_message import ChatMessage
 from common.log import logger
 from common.tmp_dir import TmpDir
-
+from config import conf
 
 class WeChatMPMessage(ChatMessage):
     def __init__(self, msg, client=None):
@@ -12,6 +12,7 @@ class WeChatMPMessage(ChatMessage):
         self.msg_id = msg.id
         self.create_time = msg.time
         self.is_group = False
+        self.client = client
 
         if msg.type == "text":
             self.ctype = ContextType.TEXT
@@ -52,5 +53,25 @@ class WeChatMPMessage(ChatMessage):
             raise NotImplementedError("Unsupported message type: Type:{} ".format(msg.type))
 
         self.from_user_id = msg.source
+        self.from_user_nickname = None #self.get_user_name(self.from_user_id)
+
+        
         self.to_user_id = msg.target
+        self.to_user_nickname = conf().get("bot_name")
+
         self.other_user_id = msg.source
+        self.other_user_id = msg.source
+        
+    def get_user_name(self, user_id):
+        try:
+            # 通过微信公众号API获取用户基本信息,自 2021年12月27日 起不再返回用户的基本信息（如 nickname、headimgurl 等）
+            response = self.client.user.get(user_id)
+            if response and 'nickname' in response:
+                logger.info(f"[wechatmp] Got userinfo for user {user_id}: {response}")
+                return response['nickname']
+            else:
+                logger.warning(f"[wechatmp] Failed to get nickname for user {user_id}")
+                return None
+        except Exception as e:
+            logger.error(f"[wechatmp] Error getting user info: {str(e)}")
+            return None
