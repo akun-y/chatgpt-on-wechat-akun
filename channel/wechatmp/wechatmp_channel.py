@@ -65,6 +65,9 @@ class WechatMPChannel(ChatChannel):
             urls = ("/wx", "channel.wechatmp.active_reply.Query")
         app = web.application(urls, globals(), autoreload=False)
         port = conf().get("wechatmp_port", 8080)
+        logger.info("========================================")
+        logger.info("[WechatMP] 微信公众号监听端口:{}".format(port))
+        logger.info("========================================")
         web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
 
     def start_loop(self, loop):
