@@ -17,6 +17,7 @@ from bridge.context import *
 from bridge.reply import *
 from channel.chat_channel import ChatChannel
 from channel.chat_message import ChatMessage
+from channel.contact_info import ContactInfo
 from channel.wcferry.robot import Robot, __version__
 from channel.wcferry.wcferry_message import WcFerryMessage
 from common.singleton import singleton
