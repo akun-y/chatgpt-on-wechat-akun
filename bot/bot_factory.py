@@ -59,6 +59,10 @@ def create_bot(bot_type):
     elif bot_type == const.ZHIPU_AI:
         from bot.zhipuai.zhipuai_bot import ZHIPUAIBot
         return ZHIPUAIBot()
+    
+    elif bot_type == const.DIFY:
+        from bot.dify.dify_bot import DifyBot
+        return DifyBot()
 
     elif bot_type == const.MOONSHOT:
         from bot.moonshot.moonshot_bot import MoonshotBot
