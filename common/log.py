@@ -1,6 +1,5 @@
 import os
-from config import conf
-from loguru import logger as logger_instance
+from loguru import logger
 import sys
 from typing import Any, Callable
 from typing_extensions import Protocol
@@ -15,8 +14,7 @@ class Logger(Protocol):
     def critical(self, __message: Any, *args: Any, **kwargs: Any) -> None: ...
     def remove(self, handler_id: Any = None) -> None: ...
     def add(self, sink: Any, **kwargs: Any) -> Any: ...
-
-
+   
 
 # 确保 Python 环境使用 UTF-8 编码
 os.environ["PYTHONIOENCODING"] = "utf-8"
@@ -28,7 +26,7 @@ class CustomLogger(Logger):
 def warn(*args, **kwargs):
     logger.warning(*args, **kwargs)
 
-
+logger_instance = logger
 # 将 warn 函数添加到 logger 对象中
 setattr(logger_instance, 'warn', warn)
 # 显式声明 logger 的类型
@@ -40,8 +38,17 @@ logger: CustomLogger = logger_instance
 # logger.warn('This is another warning message')  # 使用别名记录告日志
 
 
+# 添加全局变量存储当前日志级别
+level = "INFO"
+
+def set_log_level(new_level: str):
+    """设置日志级别"""
+    global level
+    level = new_level
+    # 重新配置logger
+    set_logger()
+
 def set_logger():
-    level = "DEBUG" if conf().get("debug")  else "INFO"
     print(f"set_logger level: {level}")
     # 配置日志记录器
     logger.remove()  # 移除默认的日志记录器
@@ -70,8 +77,8 @@ def set_logger():
         rotation="1 day",  # 每天午夜轮换日志文件
         encoding="utf-8",
     )
-
-
+ # 设置默认日志级别为 DEBUG
+ # 设置默认日志级别为 DEBUG
 def _reset_logger(logger_instance):
     """重置logger配置"""
     set_logger()

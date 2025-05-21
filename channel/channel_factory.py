@@ -41,4 +41,7 @@ def create_channel(channel_type):
         from channel.weworktop.weworktop_channel import WeworkTopChannel
 
         return WeworkTopChannel()
+    elif channel_type == "wx849":
+        from channel.wx849.wx849_channel import WX849Channel
+        return WX849Channel()
     raise RuntimeError
