@@ -21,8 +21,9 @@ class ContextType(Enum):
     XML = 14 # xml卡片(聊天记录,QQ音乐,未知小程序，动画表情，收藏，直播，未知）
     WECHAT_VIDEO = 15 #视频号
     MP = 16 #微信公众号文字消息
+    LEAVE_GROUP = 17 #主动退出群聊
     EXIT_GROUP = 18 #踢出群聊
-    LEAVE_GROUP = 19 #主动退出群聊
+    ACCEPT_FRIEND = 19 # 同意好友请求   
     JOIN_GROUP = 20  # 加入群聊
     PATPAT = 21  # 拍了拍
     FUNCTION = 22  # 函数调用
@@ -33,6 +34,7 @@ class ContextType(Enum):
     RECEIVE_RED_PACKET=33  # 收到红包
     GROUP_INVITE_CONFIRM_OPEN=34 # 打开群邀请确认
     JOIN_GROUP_PROMPT = 35  # 加入群聊
+    UNKNOWN = 100  # 未知消息类型
 
     def __str__(self):
         return self.name

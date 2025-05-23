@@ -3746,12 +3746,15 @@ class WX849Channel(ChatChannel):
                                 # 使用下载后的本地文件路径
                                 image_path = tmp_path
                     if reply.type == ReplyType.IMAGE:
-                        image_io: BytesIO = image_path
-                        image_io.seek(0)  # 重置指针到起始位置
-                        # 保存为本地文件
-                        with open(tmp_path, "wb") as f:
-                            f.write(image_io.getvalue())  # 直接写入二进制数据
-                        image_path = tmp_path
+                        if isinstance(reply.content, io.BytesIO):
+                            image_io: BytesIO = image_path
+                            image_io.seek(0)  # 重置指针到起始位置
+                            # 保存为本地文件
+                            with open(tmp_path, "wb") as f:
+                                f.write(image_io.getvalue())  # 直接写入二进制数据
+                            image_path = tmp_path
+                        else:
+                            image_path = reply.content
 
                     # 发送图片文件，传递上下文对象 - 直接使用异步调用
                     result = await self._send_image(receiver, image_path, context)

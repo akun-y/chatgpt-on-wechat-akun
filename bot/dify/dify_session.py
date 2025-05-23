@@ -68,7 +68,7 @@ class DifySessionManager(object):
         self.sessioncls = sessioncls
         self.session_kwargs = session_kwargs
 
-    def _build_session(self, session_id: str, user: str):
+    def build_session(self, session_id: str, user: str=''):
         """
         如果session_id不在sessions中，创建一个新的session并添加到sessions中
         """
@@ -81,7 +81,7 @@ class DifySessionManager(object):
         return session
 
     def get_session(self, session_id, user):
-        session = self._build_session(session_id, user)
+        session = self.build_session(session_id, user)
         return session
 
     def clear_session(self, session_id):
