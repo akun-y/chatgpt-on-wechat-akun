@@ -1,0 +1,12 @@
+[submodule "plugins/plugin_iKnowWxAPI"]
+	path = plugins/plugin_iKnowWxAPI
+	url = https://github.com/akun-y/plugin_iKnowWxAPI.git
+[submodule "plugins/plugin_comm"]
+	path = plugins/plugin_comm
+	url = git@github.com:akun-y/plugin_comm.git
+[submodule "plugins/plugin_iKnowFilter"]
+	path = plugins/plugin_iKnowFilter
+	url = https://github.com/akun-y/plugin_iKnowFilter.git
+[submodule "plugins/plugin_iKnowGAssistant"]
+	path = plugins/plugin_iKnowGAssistant
+	url = https://github.com/akun-y/plugin_iKnowGAssistant.git
