@@ -122,7 +122,7 @@ class ChatChannel(Channel):
                         self.name = self.name if self.name is not None else ""  # 部分渠道self.name可能没有赋值
                         pattern = f"@{re.escape(self.name)}(\u2005|\u0020)"
                         subtract_res = re.sub(pattern, r"", content)
-                        if isinstance(context["msg"].at_list, list):
+                        if hasattr(context["msg"],'at_list') and isinstance(context["msg"].at_list, list):
                             for at in context["msg"].at_list:
                                 pattern = f"@{re.escape(at)}(\u2005|\u0020)"
                                 subtract_res = re.sub(pattern, r"", subtract_res)
