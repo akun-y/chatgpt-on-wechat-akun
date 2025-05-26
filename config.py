@@ -220,6 +220,15 @@ available_setting = {
     "use_linkai": False,
     "linkai_api_key": "",
     "linkai_app_code": "",
+
+    "accept_friend": True,  # 配置是否自动通过好友请求，随机延迟1-10秒
+    "fast_gpt": False,  # 标识模型接口是否是fastgpt
+    "ntchat_smart": True,  # 配置ntchat是否使用已登录微信，False为多开
+    "wework_smart": True,  # 配置wework是否使用已登录微信，False为多开
+    "fastgpt_list": {},  # 配置群聊单一fasgpt知识库
+    "wework_http": "http://127.0.0.1",  # weworktop通道http接口地址
+    "wework_callback_port": 8001,  # weworktop回调端口,
+
     "linkai_api_base": "https://api.link-ai.tech",  # linkAI服务地址
     "Minimax_api_key": "",
     "Minimax_group_id": "",
