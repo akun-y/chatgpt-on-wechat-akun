@@ -39,3 +39,4 @@ file_cache.json
 plugins/banwords/config.json
 .wcf.lock
 
+config-*.json
