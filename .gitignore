@@ -40,3 +40,4 @@ plugins/banwords/config.json
 .wcf.lock
 
 config-*.json
+plugins/plugin_*
