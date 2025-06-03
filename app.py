@@ -4,7 +4,7 @@ import os
 import signal
 import sys
 import time
-from common.log import logger
+from common.log import logger, set_log_level
 # 添加lib目录到Python路径，解决wx849模块导入问题
 current_dir = os.path.dirname(os.path.abspath(__file__))
 lib_dir = os.path.join(current_dir, "lib")
@@ -57,6 +57,9 @@ def run():
     try:
         # load config
         load_config()
+
+        # 获取配置的日志级别，默认为 INFO 以减少输出
+        set_log_level("DEBUG" if conf().get("debug", False) else "INFO")
         # ctrl + c
         sigterm_handler_wrap(signal.SIGINT)
         # kill signal
