@@ -4,7 +4,7 @@ import os
 import signal
 import sys
 import time
-
+from common.log import logger
 # 添加lib目录到Python路径，解决wx849模块导入问题
 current_dir = os.path.dirname(os.path.abspath(__file__))
 lib_dir = os.path.join(current_dir, "lib")
