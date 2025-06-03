@@ -41,3 +41,4 @@ plugins/banwords/config.json
 
 config-*.json
 plugins/plugin_*
+cow-test/
