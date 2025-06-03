@@ -24,6 +24,7 @@ handler_pool = ThreadPoolExecutor(max_workers=8)  # 处理消息的线程池
 
 # 抽象类, 它包含了与消息通道无关的通用处理逻辑
 class ChatChannel(Channel):
+    channel_type = conf().get("channel_type", "wx")
     name = None  # 登录的用户名
     user_id = None  # 登录的用户id
     futures = {}  # 记录每个session_id提交到线程池的future对象, 用于重置会话时把没执行的future取消掉，正在执行的不会被取消
