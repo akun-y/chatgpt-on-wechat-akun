@@ -809,9 +809,6 @@ class WX849Channel(ChatChannel):
             # 记录最近收到的媒体消息，用于识图等功能的关联
             for msg in messages:
                 try:
-                    # 检查是否是多媒体消息
-                    msg_type = msg.get('MsgType', 0)
-
                     # 检查是否是图片消息
                     msg_type = msg.get('MsgType', 0)
                     raw_log_line = msg.get("RawLogLine", "")
@@ -1432,13 +1429,13 @@ class WX849Channel(ChatChannel):
                     logger.debug(f"[WX849] 群聊发送者提取(方法1): {cmsg.sender_wxid}")
                 else:
                     # 方法2: 尝试解析简单的格式 "wxid:消息内容"
-                    split_content = cmsg.content.split(":", 1)
-                    if len(split_content) > 1 and split_content[0] and not split_content[0].startswith("<"):
-                        cmsg.sender_wxid = split_content[0]
-                        cmsg.content = split_content[1]
-                        sender_extracted = True
-                        logger.debug(f"[WX849] 群聊发送者提取(方法2): {cmsg.sender_wxid}")
-                    else:
+                    # split_content = cmsg.content.split(":", 1)
+                    # if len(split_content) > 1 and split_content[0] and not split_content[0].startswith("<"):
+                    #     cmsg.sender_wxid = split_content[0]
+                    #     cmsg.content = split_content[1]
+                    #     sender_extracted = True
+                    #     logger.debug(f"[WX849] 群聊发送者提取(方法2): {cmsg.sender_wxid}")
+                    # else:
                         sender_extracted = False
 
                 # 方法3: 尝试从回复XML中提取
@@ -1606,13 +1603,13 @@ class WX849Channel(ChatChannel):
                     logger.debug(f"[WX849] 群聊发送者提取(方法1): {cmsg.sender_wxid}")
 
                 # 方法2: 尝试解析简单的格式 "wxid:消息内容"
-                if not sender_extracted:
-                    split_content = cmsg.content.split(":", 1)
-                    if len(split_content) > 1 and split_content[0] and not split_content[0].startswith("<"):
-                        cmsg.sender_wxid = split_content[0]
-                        cmsg.content = split_content[1]
-                        sender_extracted = True
-                        logger.debug(f"[WX849] 群聊发送者提取(方法2): {cmsg.sender_wxid}")
+                # if not sender_extracted:
+                #     split_content = cmsg.content.split(":", 1)
+                #     if len(split_content) > 1 and split_content[0] and not split_content[0].startswith("<"):
+                #         cmsg.sender_wxid = split_content[0]
+                #         cmsg.content = split_content[1]
+                #         sender_extracted = True
+                #         logger.debug(f"[WX849] 群聊发送者提取(方法2): {cmsg.sender_wxid}")
 
                 # 尝试从XML回复或引用中提取
                 if not sender_extracted and cmsg.content and cmsg.content.startswith("<"):
