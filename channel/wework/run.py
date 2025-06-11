@@ -5,7 +5,6 @@ import ntwork
 
 wework = ntwork.WeWork()
 
-
 def forever():
     try:
         while True:

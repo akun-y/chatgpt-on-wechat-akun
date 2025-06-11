@@ -16,18 +16,21 @@ from channel.wework.wework_message import WeworkMessage
 from common.singleton import singleton
 from common.log import logger
 from common.time_check import time_checker
-from common.utils import compress_imgfile, fsize
 from config import conf
 from channel.wework.run import wework
 from channel.wework import run
 from PIL import Image
+from typing import Optional
 
+from channel.contact_info import ContactInfo
+import time
+import json
+import re
 
-def get_wxid_by_name(room_members, group_wxid, name):
-    if group_wxid in room_members:
-        for member in room_members[group_wxid]['member_list']:
-            if member['room_nickname'] == name or member['username'] == name:
-                return member['user_id']
+def get_wxid_by_name(room_members:[], group_wxid, name)->Optional[str]:
+    for member in room_members.get('member_list', []):
+        if member['room_nickname'] == name or member['username'] == name:
+            return member['user_id']
     return None  # 如果没有找到对应的group_wxid或name，则返回None
 
 
@@ -39,25 +42,12 @@ def download_and_compress_image(url, filename, quality=30):
         os.makedirs(directory)
 
     # 下载图片
-    pic_res = requests.get(url, stream=True)
-    image_storage = io.BytesIO()
-    for block in pic_res.iter_content(1024):
-        image_storage.write(block)
+    response = requests.get(url)
+    image = Image.open(io.BytesIO(response.content))
 
-    # 检查图片大小并可能进行压缩
-    sz = fsize(image_storage)
-    if sz >= 10 * 1024 * 1024:  # 如果图片大于 10 MB
-        logger.info("[wework] image too large, ready to compress, sz={}".format(sz))
-        image_storage = compress_imgfile(image_storage, 10 * 1024 * 1024 - 1)
-        logger.info("[wework] image compressed, sz={}".format(fsize(image_storage)))
-
-    # 将内存缓冲区的指针重置到起始位置
-    image_storage.seek(0)
-
-    # 读取并保存图片
-    image = Image.open(image_storage)
-    image_path = os.path.join(directory, f"{filename}.png")
-    image.save(image_path, "png")
+    # 压缩图片
+    image_path = os.path.join(directory, f"{filename}.jpg")
+    image.save(image_path, "JPEG", quality=quality)
 
     return image_path
 
@@ -120,7 +110,7 @@ def _check(func):
 
 
 @wework.msg_register(
-    [ntwork.MT_RECV_TEXT_MSG, ntwork.MT_RECV_IMAGE_MSG, 11072, ntwork.MT_RECV_LINK_CARD_MSG,ntwork.MT_RECV_FILE_MSG, ntwork.MT_RECV_VOICE_MSG])
+    [ntwork.MT_RECV_TEXT_MSG, ntwork.MT_RECV_IMAGE_MSG, 11072, ntwork.MT_RECV_VOICE_MSG])
 def all_msg_handler(wework_instance: ntwork.WeWork, message):
     logger.debug(f"收到消息: {message}")
     if 'data' in message:
@@ -183,10 +173,12 @@ class WeworkChannel(ChatChannel):
         smart = conf().get("wework_smart", True)
         wework.open(smart)
         logger.info("等待登录······")
+        self.contacts = {}
+
         wework.wait_login()
         login_info = wework.get_login_info()
         self.user_id = login_info['user_id']
-        self.name = login_info['nickname']
+        self.name = login_info['nickname'] if login_info['nickname'] else login_info['username']
         logger.info(f"登录信息:>>>user_id:{self.user_id}>>>>>>>>name:{self.name}")
         logger.info("静默延迟60s，等待客户端刷新数据，请勿进行任何操作······")
         time.sleep(60)
@@ -211,25 +203,55 @@ class WeworkChannel(ChatChannel):
         for room in rooms['room_list']:
             # 获取聊天室ID
             room_wxid = room['conversation_id']
-
             # 获取聊天室成员
             room_members = wework.get_room_members(room_wxid)
-
             # 将聊天室成员保存到结果字典中
             result[room_wxid] = room_members
-
         # 将结果保存到json文件中
         with open(os.path.join(directory, 'wework_room_members.json'), 'w', encoding='utf-8') as f:
-            json.dump(result, f, ensure_ascii=False, indent=4)
+            json.dump(result, f, ensure_ascii=False, indent=4)        
+
+        user_list = contacts.get('user_list', [])
+        for u in user_list:
+            #{'acctid': '', 'add_time': 1746148356, 'avatar': 'http://wx.qlogo.cn/mmhead/H9ee2jrYUDFQlzcK5G8rQ7S9R0TMzN9Wcby1N2Tb5xw/0', 
+            # 'conversation_id': 'S:1688854757700948_7881303247961521', 'corp_id': '1970325134026788', 'mobile': '', 'nickname': '', 
+            # 'position': '', 'realname': '', 'remark': '', 'sex': 1, 'unionid': 'ozynqsv0_76pT2cvCXGl5xPEjI44', 'user_id': '7881303247961521', 
+            # 'username': 'Akun~~~'}
+            wxid = u['user_id']
+            self.contacts[wxid] = ContactInfo(
+                wxid=wxid,
+                name=u['username'],
+                avatar=u['avatar'],
+                aaa=u['unionid'],
+                )
+
         logger.info("wework程序初始化完成········")
         run.forever()
 
+    def get_user_by_wxid(self, wxid:str):
+        if wxid not in self.contacts:
+            logger.error(f"[WX]找不到wxid:{wxid}对应的用户信息")
+            return None
+        result = self.contacts[wxid]
+        logger.info(f"[WX]获取到的用户信息：{result}")
+        # contact_data = {
+        #     "wxid": str(result.get("wxid", wxid)),  # 确保 wxid 是字符串
+        #     "name": str(result.get("name", "")),    # 确保 name 是字符串
+        #     "display_name": result.get("display_name"),
+        #     "remark": result.get("remark"),
+        #     "country": result.get("country"),
+        #     "province": result.get("province"),
+        #     "city": result.get("city"),
+        #     "gender": result.get("gender"),
+        #     "alias": result.get("alias"),
+        #     "avatar": result.get("avatar"),
+        # }
+        return result
+
+    
     @time_checker
     @_check
     def handle_single(self, cmsg: ChatMessage):
-        if cmsg.from_user_id == cmsg.to_user_id:
-            # ignore self reply
-            return
         if cmsg.ctype == ContextType.VOICE:
             if not conf().get("speech_recognition"):
                 return
@@ -267,17 +289,28 @@ class WeworkChannel(ChatChannel):
 
     # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
     def send(self, reply: Reply, context: Context):
-        logger.debug(f"context: {context}")
         receiver = context["receiver"]
-        actual_user_id = context["msg"].actual_user_id
+        session_id = context["session_id"]
         if reply.type == ReplyType.TEXT or reply.type == ReplyType.TEXT_:
             match = re.search(r"^@(.*?)\n", reply.content)
-            logger.debug(f"match: {match}")
             if match:
-                new_content = re.sub(r"^@(.*?)\n", "\n", reply.content)
-                at_list = [actual_user_id]
-                logger.debug(f"new_content: {new_content}")
-                wework.send_room_at_msg(receiver, new_content, at_list)
+                # 提取@的用户名
+                name = match.group(1)  # 获取第一个组的内容，即名字      
+
+                cmsg = context.get('msg',None)               
+                room_wxid = cmsg.other_user_id or context.get('session_id','')
+                room_members = wework.get_room_members(room_wxid)          
+                wxid = get_wxid_by_name(room_members, receiver, name)
+                if wxid:
+                    new_content = reply.content.replace(f"@{name}", "")
+                    #wxid_list = [actual_user_id for actual_user_id in match.group(1).split()]
+                    wxid_list = [wxid]
+                    wework.send_room_at_msg(receiver, new_content, wxid_list)                    
+                else:
+                    wework.send_text(receiver, reply.content)
+                # wxid_list = [actual_user_id for actual_user_id in match.group(1).split()]
+                # wework.send_room_at_msg(receiver, new_content, wxid_list)
+                #wework.send_room_at_msg(receiver, new_content,[self.user_id])
             else:
                 wework.send_text(receiver, reply.content)
             logger.info("[WX] sendMsg={}, receiver={}".format(reply, receiver))
@@ -286,17 +319,31 @@ class WeworkChannel(ChatChannel):
             logger.info("[WX] sendMsg={}, receiver={}".format(reply, receiver))
         elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
             image_storage = reply.content
-            image_storage.seek(0)
-            # Read data from image_storage
-            data = image_storage.read()
-            # Create a temporary file
+            # 检查 reply.content 是字符串还是文件句柄
+            if isinstance(image_storage, str):
+                # 如果是字符串，假设它是文件路径或内容
+                logger.info("[WX] reply.content is a string, treating as file path or content")
+                # 发送图片
+                wework.send_image(receiver, image_storage)
+                logger.info("[WX] sendImage, receiver={}".format(receiver))
+                return
+            elif isinstance(image_storage, (io.IOBase, io.BufferedReader, io.BytesIO)):
+                # 如果是文件句柄，seek 到开头并读取
+                image_storage.seek(0)
+                data = image_storage.read()
+            else:
+                raise ValueError(f"Unsupported reply.content type: {type(image_storage)}")
+
+            # 创建临时文件
             with tempfile.NamedTemporaryFile(delete=False) as temp:
                 temp_path = temp.name
                 temp.write(data)
-            # Send the image
+
+            # 发送图片
             wework.send_image(receiver, temp_path)
             logger.info("[WX] sendImage, receiver={}".format(receiver))
-            # Remove the temporary file
+
+            # 删除临时文件
             os.remove(temp_path)
         elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
             img_url = reply.content
@@ -319,8 +366,5 @@ class WeworkChannel(ChatChannel):
                 wework.send_video(receiver, video_path)
             logger.info("[WX] sendVideo, receiver={}".format(receiver))
         elif reply.type == ReplyType.VOICE:
-            current_dir = os.getcwd()
-            voice_file = reply.content.split("/")[-1]
-            reply.content = os.path.join(current_dir, "tmp", voice_file)
             wework.send_file(receiver, reply.content)
             logger.info("[WX] sendFile={}, receiver={}".format(reply.content, receiver))
