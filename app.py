@@ -40,7 +40,7 @@ def sigterm_handler_wrap(_signo):
 def start_channel(channel_name: str):
     channel = channel_factory.create_channel(channel_name)
     if channel_name in ["wx", "wxy", "terminal", "wechatmp","wechatmp_service", "wechatcom_app", "wework",
-                        "wechatcom_service", "gewechat", "web", "wx849"]:
+                        "wechatcom_service", "gewechat", "web", "wx849","wcferry"]:
 
         PluginManager().load_plugins()
 
