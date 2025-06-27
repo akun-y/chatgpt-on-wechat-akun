@@ -7,6 +7,7 @@ import pilk
 
 from bridge.context import ContextType
 from channel.chat_message import ChatMessage
+from channel.contact_info import ContactInfo, make_contact_info
 from common.log import logger
 
 def get_with_retry(get_func, max_retries=5, delay=5):
@@ -78,7 +79,7 @@ class WeworkMessage(ChatMessage):
             self.create_time = wework_msg['data'].get("send_time")
             self.is_group = is_group
             self.wework = wework
-
+            
             if wework_msg["type"] == 11041:  # 文本消息类型
                 if any(substring in wework_msg['data']['content'] for substring in ("该消息类型暂不能展示", "不支持的消息类型")):
                     return
@@ -140,7 +141,7 @@ class WeworkMessage(ChatMessage):
             self.to_user_id = user_id
             self.to_user_nickname = nickname
             self.other_user_nickname = sender_name
-            self.other_user_id = conversation_id
+            self.other_user_id = conversation_id            
 
             if self.is_group:
                 conversation_id = data.get('conversation_id') or data.get('room_conversation_id')
@@ -162,6 +163,22 @@ class WeworkMessage(ChatMessage):
                     if not self.actual_user_id:
                         self.actual_user_id = data.get("sender")
                     self.actual_user_nickname = sender_name if self.ctype != ContextType.JOIN_GROUP else self.actual_user_nickname
+                    
+                    if self._rawmsg:
+                        usr = wework.get_contact_detail(self.actual_user_id)
+                        self._rawmsg['sender_info'] = make_contact_info(
+                            name=usr.get('username', ''),
+                            wxid=usr.get('unionid', ''),
+                            alias=usr.get('acctid', ''),
+                            avatar=usr.get('avatar', ''),
+                            display_name=usr.get('nickname', self.actual_user_nickname),
+                            corp_id=usr.get('corp_id', ''),
+                            remark=usr.get('remark', ''),
+                            real_name=usr.get('real_name', ''),
+                            mobile=usr.get('mobile', ''),
+                        )
+                        logger.debug(f"添加 actual_user_id 用户信息到 _rawmsg: {self._rawmsg}")
+
                 else:
                     logger.error("群聊消息中没有找到 conversation_id 或 room_conversation_id")
 

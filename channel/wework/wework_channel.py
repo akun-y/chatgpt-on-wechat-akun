@@ -1,9 +1,11 @@
 import io
 import os
 import random
+import sys
 import tempfile
 import threading
-os.environ['ntwork_LOG'] = "ERROR"
+
+os.environ["ntwork_LOG"] = "ERROR"
 import ntwork
 import requests
 import uuid
@@ -22,15 +24,15 @@ from channel.wework import run
 from PIL import Image
 from typing import Optional
 
-from channel.contact_info import ContactInfo
 import time
 import json
 import re
 
-def get_wxid_by_name(room_members:[], group_wxid, name)->Optional[str]:
-    for member in room_members.get('member_list', []):
-        if member['room_nickname'] == name or member['username'] == name:
-            return member['user_id']
+
+def get_wxid_by_name(room_members: [], group_wxid, name) -> Optional[str]:
+    for member in room_members.get("member_list", []):
+        if member["room_nickname"] == name or member["username"] == name:
+            return member["user_id"]
     return None  # 如果没有找到对应的group_wxid或name，则返回None
 
 
@@ -65,7 +67,7 @@ def download_video(url, filename):
 
     video_path = os.path.join(directory, f"{filename}.mp4")
 
-    with open(video_path, 'wb') as f:
+    with open(video_path, "wb") as f:
         for block in response.iter_content(1024):
             total_size += len(block)
 
@@ -110,16 +112,21 @@ def _check(func):
 
 
 @wework.msg_register(
-    [ntwork.MT_RECV_TEXT_MSG, ntwork.MT_RECV_IMAGE_MSG, 11072, ntwork.MT_RECV_VOICE_MSG])
+    [ntwork.MT_RECV_TEXT_MSG, ntwork.MT_RECV_IMAGE_MSG, 11072, ntwork.MT_RECV_VOICE_MSG]
+)
 def all_msg_handler(wework_instance: ntwork.WeWork, message):
     logger.debug(f"收到消息: {message}")
-    if 'data' in message:
+    if "data" in message:
         # 首先查找conversation_id，如果没有找到，则查找room_conversation_id
-        conversation_id = message['data'].get('conversation_id', message['data'].get('room_conversation_id'))
+        conversation_id = message["data"].get(
+            "conversation_id", message["data"].get("room_conversation_id")
+        )
         if conversation_id is not None:
             is_group = "R:" in conversation_id
             try:
-                cmsg = create_message(wework_instance=wework_instance, message=message, is_group=is_group)
+                cmsg = create_message(
+                    wework_instance=wework_instance, message=message, is_group=is_group
+                )
             except NotImplementedError as e:
                 logger.error(f"[WX]{message.get('MsgId', 'unknown')} 跳过: {e}")
                 return None
@@ -134,7 +141,7 @@ def all_msg_handler(wework_instance: ntwork.WeWork, message):
 
 def accept_friend_with_retries(wework_instance, user_id, corp_id):
     result = wework_instance.accept_friend(user_id, corp_id)
-    logger.debug(f'result:{result}')
+    logger.debug(f"result:{result}")
 
 
 # @wework.msg_register(ntwork.MT_RECV_FRIEND_MSG)
@@ -173,12 +180,13 @@ class WeworkChannel(ChatChannel):
         smart = conf().get("wework_smart", True)
         wework.open(smart)
         logger.info("等待登录······")
-        self.contacts = {}
 
         wework.wait_login()
         login_info = wework.get_login_info()
-        self.user_id = login_info['user_id']
-        self.name = login_info['nickname'] if login_info['nickname'] else login_info['username']
+        self.user_id = login_info["user_id"]
+        self.name = (
+            login_info["nickname"] if login_info["nickname"] else login_info["username"]
+        )
         logger.info(f"登录信息:>>>user_id:{self.user_id}>>>>>>>>name:{self.name}")
         logger.info("静默延迟60s，等待客户端刷新数据，请勿进行任何操作······")
         time.sleep(60)
@@ -188,67 +196,38 @@ class WeworkChannel(ChatChannel):
         if not contacts or not rooms:
             logger.error("获取contacts或rooms失败，程序退出")
             ntwork.exit_()
-            os.exit(0)
+            sys.exit(0)
         if not os.path.exists(directory):
             os.makedirs(directory)
         # 将contacts保存到json文件中
-        with open(os.path.join(directory, 'wework_contacts.json'), 'w', encoding='utf-8') as f:
+        with open(
+            os.path.join(directory, "wework_contacts.json"), "w", encoding="utf-8"
+        ) as f:
             json.dump(contacts, f, ensure_ascii=False, indent=4)
-        with open(os.path.join(directory, 'wework_rooms.json'), 'w', encoding='utf-8') as f:
+        with open(
+            os.path.join(directory, "wework_rooms.json"), "w", encoding="utf-8"
+        ) as f:
             json.dump(rooms, f, ensure_ascii=False, indent=4)
         # 创建一个空字典来保存结果
         result = {}
 
         # 遍历列表中的每个字典
-        for room in rooms['room_list']:
+        for room in rooms["room_list"]:
             # 获取聊天室ID
-            room_wxid = room['conversation_id']
+            room_wxid = room["conversation_id"]
             # 获取聊天室成员
             room_members = wework.get_room_members(room_wxid)
             # 将聊天室成员保存到结果字典中
             result[room_wxid] = room_members
         # 将结果保存到json文件中
-        with open(os.path.join(directory, 'wework_room_members.json'), 'w', encoding='utf-8') as f:
-            json.dump(result, f, ensure_ascii=False, indent=4)        
-
-        user_list = contacts.get('user_list', [])
-        for u in user_list:
-            #{'acctid': '', 'add_time': 1746148356, 'avatar': 'http://wx.qlogo.cn/mmhead/H9ee2jrYUDFQlzcK5G8rQ7S9R0TMzN9Wcby1N2Tb5xw/0', 
-            # 'conversation_id': 'S:1688854757700948_7881303247961521', 'corp_id': '1970325134026788', 'mobile': '', 'nickname': '', 
-            # 'position': '', 'realname': '', 'remark': '', 'sex': 1, 'unionid': 'ozynqsv0_76pT2cvCXGl5xPEjI44', 'user_id': '7881303247961521', 
-            # 'username': 'Akun~~~'}
-            wxid = u['user_id']
-            self.contacts[wxid] = ContactInfo(
-                wxid=wxid,
-                name=u['username'],
-                avatar=u['avatar'],
-                aaa=u['unionid'],
-                )
+        with open(
+            os.path.join(directory, "wework_room_members.json"), "w", encoding="utf-8"
+        ) as f:
+            json.dump(result, f, ensure_ascii=False, indent=4)
 
         logger.info("wework程序初始化完成········")
         run.forever()
 
-    def get_user_by_wxid(self, wxid:str):
-        if wxid not in self.contacts:
-            logger.error(f"[WX]找不到wxid:{wxid}对应的用户信息")
-            return None
-        result = self.contacts[wxid]
-        logger.info(f"[WX]获取到的用户信息：{result}")
-        # contact_data = {
-        #     "wxid": str(result.get("wxid", wxid)),  # 确保 wxid 是字符串
-        #     "name": str(result.get("name", "")),    # 确保 name 是字符串
-        #     "display_name": result.get("display_name"),
-        #     "remark": result.get("remark"),
-        #     "country": result.get("country"),
-        #     "province": result.get("province"),
-        #     "city": result.get("city"),
-        #     "gender": result.get("gender"),
-        #     "alias": result.get("alias"),
-        #     "avatar": result.get("avatar"),
-        # }
-        return result
-
-    
     @time_checker
     @_check
     def handle_single(self, cmsg: ChatMessage):
@@ -261,10 +240,16 @@ class WeworkChannel(ChatChannel):
         elif cmsg.ctype == ContextType.PATPAT:
             logger.debug("[WX]receive patpat msg: {}".format(cmsg.content))
         elif cmsg.ctype == ContextType.TEXT:
-            logger.debug("[WX]receive text msg: {}, cmsg={}".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
+            logger.debug(
+                "[WX]receive text msg: {}, cmsg={}".format(
+                    json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg
+                )
+            )
         else:
             logger.debug("[WX]receive msg: {}, cmsg={}".format(cmsg.content, cmsg))
-        context = self._compose_context(cmsg.ctype, cmsg.content, isgroup=False, msg=cmsg)
+        context = self._compose_context(
+            cmsg.ctype, cmsg.content, isgroup=False, msg=cmsg
+        )
         if context:
             self.produce(context)
 
@@ -283,7 +268,9 @@ class WeworkChannel(ChatChannel):
             pass
         else:
             logger.debug("[WX]receive group msg: {}".format(cmsg.content))
-        context = self._compose_context(cmsg.ctype, cmsg.content, isgroup=True, msg=cmsg)
+        context = self._compose_context(
+            cmsg.ctype, cmsg.content, isgroup=True, msg=cmsg
+        )
         if context:
             self.produce(context)
 
@@ -295,22 +282,22 @@ class WeworkChannel(ChatChannel):
             match = re.search(r"^@(.*?)\n", reply.content)
             if match:
                 # 提取@的用户名
-                name = match.group(1)  # 获取第一个组的内容，即名字      
+                name = match.group(1)  # 获取第一个组的内容，即名字
 
-                cmsg = context.get('msg',None)               
-                room_wxid = cmsg.other_user_id or context.get('session_id','')
-                room_members = wework.get_room_members(room_wxid)          
+                cmsg = context.get("msg", None)
+                room_wxid = cmsg.other_user_id or context.get("session_id", "")
+                room_members = wework.get_room_members(room_wxid)
                 wxid = get_wxid_by_name(room_members, receiver, name)
                 if wxid:
                     new_content = reply.content.replace(f"@{name}", "")
-                    #wxid_list = [actual_user_id for actual_user_id in match.group(1).split()]
+                    # wxid_list = [actual_user_id for actual_user_id in match.group(1).split()]
                     wxid_list = [wxid]
-                    wework.send_room_at_msg(receiver, new_content, wxid_list)                    
+                    wework.send_room_at_msg(receiver, new_content, wxid_list)
                 else:
                     wework.send_text(receiver, reply.content)
                 # wxid_list = [actual_user_id for actual_user_id in match.group(1).split()]
                 # wework.send_room_at_msg(receiver, new_content, wxid_list)
-                #wework.send_room_at_msg(receiver, new_content,[self.user_id])
+                # wework.send_room_at_msg(receiver, new_content,[self.user_id])
             else:
                 wework.send_text(receiver, reply.content)
             logger.info("[WX] sendMsg={}, receiver={}".format(reply, receiver))
@@ -322,7 +309,9 @@ class WeworkChannel(ChatChannel):
             # 检查 reply.content 是字符串还是文件句柄
             if isinstance(image_storage, str):
                 # 如果是字符串，假设它是文件路径或内容
-                logger.info("[WX] reply.content is a string, treating as file path or content")
+                logger.info(
+                    "[WX] reply.content is a string, treating as file path or content"
+                )
                 # 发送图片
                 wework.send_image(receiver, image_storage)
                 logger.info("[WX] sendImage, receiver={}".format(receiver))
@@ -332,7 +321,9 @@ class WeworkChannel(ChatChannel):
                 image_storage.seek(0)
                 data = image_storage.read()
             else:
-                raise ValueError(f"Unsupported reply.content type: {type(image_storage)}")
+                raise ValueError(
+                    f"Unsupported reply.content type: {type(image_storage)}"
+                )
 
             # 创建临时文件
             with tempfile.NamedTemporaryFile(delete=False) as temp:
