@@ -128,3 +128,5 @@ pip install wcferry
 1. 修改ecosystem.config.js中的路径为部署路径,设定重启时间(默认为 1:00)
 2. 安装pm2 : npm i -g pm2@latest
 3. 启动脚本: pm2 start ecosystem.config.js
+
+启动脚本中 ecosystem.config.js文件名不能修改
