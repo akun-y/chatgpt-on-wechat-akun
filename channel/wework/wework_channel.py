@@ -276,8 +276,9 @@ class WeworkChannel(ChatChannel):
 
     # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
     def send(self, reply: Reply, context: Context):
+        ret = False
         receiver = context["receiver"]
-        session_id = context["session_id"]
+        
         if reply.type == ReplyType.TEXT or reply.type == ReplyType.TEXT_:
             match = re.search(r"^@(.*?)\n", reply.content)
             if match:
@@ -292,9 +293,9 @@ class WeworkChannel(ChatChannel):
                     new_content = reply.content.replace(f"@{name}", "")
                     # wxid_list = [actual_user_id for actual_user_id in match.group(1).split()]
                     wxid_list = [wxid]
-                    wework.send_room_at_msg(receiver, new_content, wxid_list)
+                    ret = wework.send_room_at_msg(receiver, new_content, wxid_list)
                 else:
-                    wework.send_text(receiver, reply.content)
+                    ret = wework.send_text(receiver, reply.content)
                 # wxid_list = [actual_user_id for actual_user_id in match.group(1).split()]
                 # wework.send_room_at_msg(receiver, new_content, wxid_list)
                 # wework.send_room_at_msg(receiver, new_content,[self.user_id])
@@ -302,7 +303,7 @@ class WeworkChannel(ChatChannel):
                 wework.send_text(receiver, reply.content)
             logger.info("[WX] sendMsg={}, receiver={}".format(reply, receiver))
         elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
-            wework.send_text(receiver, reply.content)
+            ret = wework.send_text(receiver, reply.content)
             logger.info("[WX] sendMsg={}, receiver={}".format(reply, receiver))
         elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
             image_storage = reply.content
@@ -331,7 +332,7 @@ class WeworkChannel(ChatChannel):
                 temp.write(data)
 
             # 发送图片
-            wework.send_image(receiver, temp_path)
+            ret = wework.send_image(receiver, temp_path)
             logger.info("[WX] sendImage, receiver={}".format(receiver))
 
             # 删除临时文件
@@ -343,7 +344,7 @@ class WeworkChannel(ChatChannel):
             # 调用你的函数，下载图片并保存为本地文件
             image_path = download_and_compress_image(img_url, filename)
 
-            wework.send_image(receiver, file_path=image_path)
+            ret = wework.send_image(receiver, file_path=image_path)
             logger.info("[WX] sendImage url={}, receiver={}".format(img_url, receiver))
         elif reply.type == ReplyType.VIDEO_URL:
             video_url = reply.content
@@ -352,10 +353,28 @@ class WeworkChannel(ChatChannel):
 
             if video_path is None:
                 # 如果视频太大，下载可能会被跳过，此时 video_path 将为 None
-                wework.send_text(receiver, "抱歉，视频太大了！！！")
+                ret = wework.send_text(receiver, "抱歉，视频太大了！！！")
             else:
-                wework.send_video(receiver, video_path)
+                ret = wework.send_video(receiver, video_path)
+            logger.info("[WX] sendVideo, receiver={}".format(receiver))
+        elif reply.type == ReplyType.VIDEO:
+            video_path = reply.content
+            if exists := os.path.exists(video_path):
+                if not exists:
+                    logger.error("[WX] Video file does not exist: {}".format(video_path))                    
+                    return
+            ret = wework.send_video(receiver, video_path)
             logger.info("[WX] sendVideo, receiver={}".format(receiver))
         elif reply.type == ReplyType.VOICE:
-            wework.send_file(receiver, reply.content)
+            ret = wework.send_file(receiver, reply.content)
             logger.info("[WX] sendFile={}, receiver={}".format(reply.content, receiver))
+        else:
+            logger.error(
+                "[WX] Unsupported reply type: {}, content: {}".format(
+                    reply.type, reply.content
+                )
+            )
+            raise NotImplementedError(
+                f"Unsupported reply type: {reply.type}, content: {reply.content}"
+            )
+        return ret
