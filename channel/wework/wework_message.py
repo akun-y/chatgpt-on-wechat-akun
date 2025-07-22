@@ -24,9 +24,10 @@ def get_with_retry(get_func, max_retries=5, delay=5):
 
 
 def get_room_info(wework, conversation_id):
-    logger.debug(f"传入的 conversation_id: {conversation_id}")
+    
     rooms = wework.get_rooms()
     if not rooms or 'room_list' not in rooms:
+        logger.error(f"传入的 conversation_id: {conversation_id}")
         logger.error(f"获取群聊信息失败: {rooms}")
         return None
     time.sleep(1)

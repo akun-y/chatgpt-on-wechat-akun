@@ -15,7 +15,6 @@ LOGIN_INFO_CACHE = {}
 def get_room_info(conversation_id):
     directory = os.path.join(os.getcwd(), "tmp")
     file_path = os.path.join(directory, "wework_rooms.json")
-    logger.debug(f"传入的 conversation_id: {conversation_id}")
 
     # 从文件中读取群聊信息
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -27,7 +26,7 @@ def get_room_info(conversation_id):
 
     rooms = rooms_data['data']['room_list']
 
-    logger.debug(f"获取到的群聊信息: {rooms}")
+   
     for room in rooms:
         if room['conversation_id'] == conversation_id:
             return room
