@@ -23,15 +23,14 @@ def get_with_retry(get_func, max_retries=5, delay=5):
     return result
 
 
-def get_room_info(wework, conversation_id):
-    
+def get_room_info(wework, conversation_id):    
     rooms = wework.get_rooms()
     if not rooms or 'room_list' not in rooms:
         logger.error(f"传入的 conversation_id: {conversation_id}")
         logger.error(f"获取群聊信息失败: {rooms}")
         return None
     time.sleep(1)
-    logger.debug(f"获取到的群聊信息: {rooms}")
+    logger.info(f"获取所有微信群: {len(rooms['room_list'])}个")
     for room in rooms['room_list']:
         if room['conversation_id'] == conversation_id:
             return room
@@ -115,16 +114,19 @@ class WeworkMessage(ChatMessage):
                     for room in rooms['room_list']:
                         # 获取聊天室ID
                         room_wxid = room['conversation_id']
-
+                        room_nickname = room['nickname']
                         # 获取聊天室成员
-                        room_members = wework.get_room_members(room_wxid)
-
+                        room_members = wework.get_room_members(room_wxid)                        
+                        room_members['nickname'] = room_nickname
+                        
+                        logger.info(f"获取聊天室成员: {room_wxid} - {room_nickname} 成员个数: {len(room_members['member_list'])}")
                         # 将聊天室成员保存到结果字典中
                         result[room_wxid] = room_members
                     with open(os.path.join(directory, 'wework_room_members.json'), 'w', encoding='utf-8') as f:
                         json.dump(result, f, ensure_ascii=False, indent=4)
-                    logger.info("有新成员加入，已自动更新群成员列表缓存！")
+                    logger.warn("有新成员加入，已自动更新群成员列表缓存！")
             else:
+                logger.error(f"不支持的消息类型: {wework_msg['type']}")
                 raise NotImplementedError(
                     "Unsupported message type: Type:{} MsgType:{}".format(wework_msg["type"], wework_msg["MsgType"]))
 

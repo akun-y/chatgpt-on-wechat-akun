@@ -215,14 +215,15 @@ class WeworkChannel(ChatChannel):
         for room in rooms["room_list"]:
             # 获取聊天室ID
             room_wxid = room["conversation_id"]
+            room_nickname = room.get("nickname", "")
             # 获取聊天室成员
             room_members = wework.get_room_members(room_wxid)
-            # 将聊天室成员保存到结果字典中
-            result[room_wxid] = room_members
+            if room_members:
+                room_members['nickname'] = room_nickname
+                # 将聊天室成员保存到结果字典中
+                result[room_wxid] = room_members
         # 将结果保存到json文件中
-        with open(
-            os.path.join(directory, "wework_room_members.json"), "w", encoding="utf-8"
-        ) as f:
+        with open(os.path.join(directory, "wework_room_members.json"), "w", encoding="utf-8") as f:
             json.dump(result, f, ensure_ascii=False, indent=4)
 
         logger.info("wework程序初始化完成········")
