@@ -13,20 +13,6 @@ from wcferry import Wcf
 
 wcf = Wcf(debug=True if conf().get("debug") else False)
 
-
-def forever():
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        # 这里可以执行任何清理工作
-        print("Cleaning up...")
-        wcf.cleanup()  # 退出前清理环境
-        # exit(0)
-        os._exit(0)
-        # sys.exit(0)
-
-
 # 专用于保存联系人,群聊,群成员信息
 def save_json_to_file(directory, contacts, filename):
     try:

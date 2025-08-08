@@ -208,7 +208,37 @@ class WcFerryChannel(ChatChannel):
 
         thread = threading.Thread(target=fun_proc)
         thread.start()
-
+    def forever(self):
+        try:
+            while True:
+                time.sleep(0.4)
+                #每隔8小时执行一次 
+                if time.time() % (1 * 3600) < 1:  # 每8小时执行一次 测试时按1小时执行一次
+                    logger.warn("定时任务: 每8小时执行一次,获取联系人和群聊信息")
+                    self.contacts = self.getAllContacts()
+                    time.sleep(0.5)
+                    if not self.contacts:
+                        logger.error("获取联系人信息失败,请检查wcferry是否正常运行")
+                        continue
+                    self.saveOtherInfo()
+                    # 保存联系人信息
+                    logger.info(f"获取联系人信息: {len(self.contacts)}个,保存到文件 wcferry_contacts.json")
+                    save_json_to_file(self.directory, self.contacts, "wcferry_contacts.json")
+                    # 合并微信群信息
+                    time.sleep(0.5)
+                    new_rooms = self.getAllrooms()
+                    if new_rooms:
+                        self.rooms = self.merge_rooms(self.rooms, new_rooms)
+                    if self.rooms:
+                        logger.info(f"获取微信群信息: {len(self.rooms)}个,保存到文件 wcferry_rooms.json")
+                        save_wxgroups_to_file(self.rooms)
+        except KeyboardInterrupt:
+            # 这里可以执行任何清理工作
+            print("Cleaning up...")
+            wcf.cleanup()  # 退出前清理环境
+            # exit(0)
+            os._exit(0)
+            # sys.exit(0)
     def startup(self):
         logger.info("等待微信登录······")
         login_info = wcf.get_user_info()
@@ -253,7 +283,7 @@ class WcFerryChannel(ChatChannel):
                     )
                     break
         # 让机器人一直跑
-        forever()
+        self.forever()
         # wcf 结束------------------------
 
     def reload_conf(self):
@@ -337,8 +367,14 @@ class WcFerryChannel(ChatChannel):
 
     # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
     def send(self, reply: Reply, context: Context):
-        receiver = context["receiver"]
+        receiver: str = str(context.get("receiver", ''))
+        if not receiver:
+            logger.error(f"[WX] send msg but receiver is None, reply={reply}")
+            return
         if reply.type == ReplyType.TEXT or reply.type == ReplyType.TEXT_:
+            if not reply.content:  # 如果内容为空，则不发送
+                logger.warning(f"reply.type == ReplyType.TEXT 但内容为空,跳过发送")
+                return
             match = re.search(r"^@(.*?)\n", reply.content)
             if match:
                 # name = match.group(1)  # 获取第一个组的内容，即名字
@@ -427,6 +463,9 @@ class WcFerryChannel(ChatChannel):
             logger.info("[WX] sendFile={}, receiver={}".format(reply.content, receiver))
         elif reply.type == ReplyType.LINK:
             # wcf.send_xml(reply.content, receiver)
+            if not reply.content:  # 兼容旧版本
+                logger.warning(f"reply.type == ReplyType.LINK 但内容为空,跳过发送")
+                return
             jsonObj = json.loads(reply.content)
             ret = wcf.send_rich_text(
                 name=jsonObj["name"],
@@ -522,7 +561,7 @@ class WcFerryChannel(ChatChannel):
 
         return contracts
 
-    # 从通讯录中和获取微信群,不包含微信群成员
+    # 从通讯录中获取微信群,不包含微信群成员
     def getRoomsFromContracts(self) -> dict:
         rooms = {}
         for wxid in self.contacts:
@@ -626,23 +665,48 @@ class WcFerryChannel(ChatChannel):
                 return wxid
         return None
 
-    def get_user_name(self, user_id):
+    def get_user_name_wcf(self, user_id)->str:
         result = wcf.query_sql(
             "MicroMsg.db", f"SELECT NickName FROM Contact WHERE UserName = '{user_id}';"
         )
         if result:
             name = result[0].get("NickName")
             if name:
+                logger.info(f"wcf.query_sql获取用户:{user_id} 的名称:{name}")
                 return name
 
         contacts = wcf.get_contacts()
         for contact in contacts:
             if contact.get("wxid") == user_id:
+                logger.info(f"wcf.get_contacts获取用户:{user_id} 的名称:{contact.get('name', '')}")
                 return contact.get("name", "")
+        logger.error(f"未找到用户:{user_id} 的名称")
         return ""
+    def get_user_name(self, user_id) -> str:
+        if self.contacts and user_id in self.contacts:
+            return self.contacts[user_id].get("name", "")
+        logger.warning(f"未找到用户:{user_id} 的名称,尝试从wcferry获取")
+        user_name = self.get_user_name_wcf(user_id)
+        if self.contacts and user_name:
+            self.contacts[user_id] = ContactInfo(name=user_name)
+        return user_name
+    def get_room_name_wcf(self, room_id)-> str:
+        return self.get_user_name_wcf(room_id)
 
-    def get_room_name(self, room_id):
-        return self.get_user_name(room_id)
+    def get_room_name(self, room_id) -> str:
+        if self.rooms and room_id in self.rooms:
+            return self.rooms[room_id].get("nickname", "")
+        
+        if self.contacts and room_id in self.contacts:
+            room_name = self.contacts[room_id].get("name", "")            
+        else:
+            logger.warning(f"未找到群:{room_id} 的名称,尝试从wcferry获取")
+            room_name = self.get_room_name_wcf(room_id)
+        
+        if self.rooms and room_name:
+            self.rooms[room_id] = {"nickname": room_name}
+        
+        return room_name
 
     def get_user_avatar_url(self, user_id):
         return self.__avatar_urls.get(user_id, "")

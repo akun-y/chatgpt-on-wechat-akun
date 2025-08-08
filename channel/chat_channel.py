@@ -41,6 +41,7 @@ class ChatChannel(Channel):
         context = Context(ctype, content)
         context.kwargs = kwargs
         if ctype == ContextType.ACCEPT_FRIEND:
+            logger.warning(f"添加好友请求处理逻辑未实现,content={content}, kwargs={kwargs}")
             return context
         # context首次传入时，origin_ctype是None,
         # 引入的起因是：当输入语音时，会嵌套生成两个context，第一步语音转文本，第二步通过文本生成文字回复。
@@ -53,6 +54,7 @@ class ChatChannel(Channel):
         if first_in:  # context首次传入时，receiver是None，根据类型设置receiver
             config = conf()
             cmsg = context["msg"]
+            
             user_data = conf().get_user_data(cmsg.from_user_id)
             context["openai_api_key"] = user_data.get("openai_api_key")
             context["gpt_model"] = user_data.get("gpt_model")
