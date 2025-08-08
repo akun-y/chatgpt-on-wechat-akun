@@ -10,6 +10,19 @@ from channel.chat_message import ChatMessage
 from channel.contact_info import ContactInfo, make_contact_info
 from common.log import logger
 
+_ROOMS_CACHE = None
+_ROOMS_CACHE_MTIME = None
+
+def load_rooms_cache(file_path):
+    global _ROOMS_CACHE, _ROOMS_CACHE_MTIME
+    mtime = os.path.getmtime(file_path)
+    if _ROOMS_CACHE is not None and _ROOMS_CACHE_MTIME == mtime:
+        return _ROOMS_CACHE
+    with open(file_path, 'r', encoding='utf-8') as file:
+        _ROOMS_CACHE = json.load(file)
+        _ROOMS_CACHE_MTIME = mtime
+        return _ROOMS_CACHE
+
 def get_with_retry(get_func, max_retries=5, delay=5):
     retries = 0
     result = None
@@ -23,20 +36,41 @@ def get_with_retry(get_func, max_retries=5, delay=5):
     return result
 
 
-def get_room_info(wework, conversation_id):    
+def get_room_info_from_wework(wework, conversation_id):    
     rooms = wework.get_rooms()
     if not rooms or 'room_list' not in rooms:
-        logger.error(f"传入的 conversation_id: {conversation_id}")
-        logger.error(f"获取群聊信息失败: {rooms}")
+        logger.error(f"[wework] 传入的 conversation_id: {conversation_id}")
+        logger.error(f"[wework] 获取群信息失败: {rooms}")
         return None
     time.sleep(1)
-    logger.info(f"get_room_info获取所有微信群: {len(rooms['room_list'])}个")
+    logger.warn(f"[wework] 获取所有微信群: {len(rooms['room_list'])}个")
     for room in rooms['room_list']:
         if room['conversation_id'] == conversation_id:
-            logger.info(f"get_room_info获取群聊信息成功: {room}")
+            logger.warn(f"[wework] 获取群信息成功: {room}")
+            # 更新本地缓存
+            directory = os.path.join(os.getcwd(), "tmp")
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            file_path = os.path.join(directory, "wework_rooms.json")
+            with open(file_path, 'w', encoding='utf-8') as file:
+                json.dump(rooms, file, ensure_ascii=False, indent=4)
             return room
-    logger.error(f"未找到对应的群聊信息: {conversation_id}")
+    logger.error(f"[wework] 未找到对应的群信息: {conversation_id}")
     return None
+
+def get_room_info(wework, conversation_id):
+    directory = os.path.join(os.getcwd(), "tmp")
+    file_path = os.path.join(directory, "wework_rooms.json")
+    rooms_data = load_rooms_cache(file_path)
+
+    if 'room_list'  in rooms_data:
+        rooms = rooms_data['room_list']
+        for room in rooms:
+            if room['conversation_id'] == conversation_id:
+                logger.info(f"[local] 获取群信息成功: {room}")
+                return room
+    logger.error(f"[local] 未找到对应的群信息: {conversation_id}")
+    return get_room_info_from_wework(wework, conversation_id)
 
 
 def cdn_download(wework, message, file_name):

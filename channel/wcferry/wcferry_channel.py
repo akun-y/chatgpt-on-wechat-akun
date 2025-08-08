@@ -134,7 +134,9 @@ def all_msg_handler(wcf: Wcf, message: WxMsg):
 def on_recv_text_msg(wechat_instance, message):
     xml_content = message["data"]["raw_msg"]
     dom = xml.dom.minidom.parseString(xml_content)
-
+    if not dom or not dom.documentElement:
+        logger.error("[WX]注册好友请求,解析XML失败")
+        return
     # 从xml取相关参数
     encryptusername = dom.documentElement.getAttribute("encryptusername")
     ticket = dom.documentElement.getAttribute("ticket")
@@ -200,7 +202,9 @@ class WcFerryChannel(ChatChannel):
             if new_rooms:
                 self.rooms = self.merge_rooms(self.rooms, new_rooms)
 
-            save_wxgroups_to_file(self.rooms)
+            if self.rooms:
+                logger.info(f"获取微信群信息: {len(self.rooms)}个,保存到文件 wcferry_rooms.json")
+                save_wxgroups_to_file(self.rooms)
 
         thread = threading.Thread(target=fun_proc)
         thread.start()
@@ -591,7 +595,7 @@ class WcFerryChannel(ChatChannel):
                 "member_list": members,
             }
             result[room["ChatRoomName"]] = chat_room_info
-
+        logger.info(f"wcf.query_sql 获取微信群信息: {len(result)}个")
         return result
 
     # 获取微信群所属成员
@@ -645,7 +649,7 @@ class WcFerryChannel(ChatChannel):
 
     # 获取微信群成员的特定昵称(display_name)或通用昵称(nickname)
     def get_room_member_name(self, room_id, member_id):
-        if not room_id or not member_id:
+        if not self.rooms or not room_id or not member_id:
             return ""
         member_name = ""
         if room_id in self.rooms:
@@ -668,22 +672,29 @@ class WcFerryChannel(ChatChannel):
                         members[member_id]["display_name"]
                         or members[member_id]["nickname"]
                     )
+                    logger.info(f"wcf.query_sql从数据库获取群:{room_id} 成员:{member_id} 的名称:{member_name}")
 
         if not member_name:
             member_name = self.get_user_name(member_id)
         return member_name
     def add_room_member(self,room_id,user_name,user_wxid):
+        if not self.rooms or not room_id or not user_wxid:
+            return
         room = self.rooms.get(room_id)
         if room:           
             room["member_list"][user_wxid] = {"nickname":user_name,"name":user_name,"display_name":user_name}
             save_wxgroups_to_file(self.rooms)
+            logger.info(f"群:{room_id} 添加成员:{user_name} {user_wxid} 并保存到文件 wcferry_rooms.json")
     def remove_room_member(self,room_id,user_wxid):
+        if not self.rooms or not room_id or not user_wxid:
+            return
         room = self.rooms.get(room_id)
         if room:
             room["member_list"].pop(user_wxid)
             save_wxgroups_to_file(self.rooms)
+            logger.info(f"群:{room_id} 移除成员:{user_wxid} 并保存到文件 wcferry_rooms.json")
     def get_room_member_wxid(self, room_id, name):
-        if not room_id or not name:
+        if not self.rooms or not room_id or not name:
             return ""
         if room_id in self.rooms:
             room = self.rooms[room_id]
@@ -738,7 +749,7 @@ class WcFerryChannel(ChatChannel):
         save_json_to_file(directory, wcf_rooms_name, "rooms-name.json")
 
     def getAllRoomMembers(self):
-        rooms = self.getAllRooms()
+        rooms = self.getAllrooms()
         result = {}
         for room_id in rooms:
             room = rooms[room_id]

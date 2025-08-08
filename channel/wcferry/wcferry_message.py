@@ -196,7 +196,6 @@ class WcFerryMessage(ChatMessage):
             self.channel = channel
 
             # 获取一些可能多次使用的值
-            self.login_info = self.scf.get_user_info()
             self.nickname = channel.name
             self.user_id = channel.user_id
 
@@ -413,7 +412,6 @@ class WcFerryMessage(ChatMessage):
             logger.error(f"在 WechatMessage 的初始化过程中出现错误：{e} ")
             
             logger.error(self.scf)
-            logger.error(self.login_info)
             raise e
 
     def proc_sys_wechat_msg(self, data):

@@ -76,3 +76,4 @@ def save_wxgroups_to_file(rooms:dict,directory=None,file_name=None):
         file_name = "wcferry_rooms.json"   
 
     save_json_to_file(directory, rooms, file_name)
+    logger.info(f"[wcferry] 已保存群信息到 {directory}/{file_name} 共 {len(rooms)} 个群")
