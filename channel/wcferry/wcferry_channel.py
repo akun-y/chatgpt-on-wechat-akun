@@ -234,7 +234,7 @@ class WcFerryChannel(ChatChannel):
                         save_wxgroups_to_file(self.rooms)
         except KeyboardInterrupt:
             # 这里可以执行任何清理工作
-            print("Cleaning up...")
+            print("WCF Cleaning up...")
             wcf.cleanup()  # 退出前清理环境
             # exit(0)
             os._exit(0)
