@@ -213,7 +213,7 @@ class WcFerryChannel(ChatChannel):
             while True:
                 time.sleep(0.4)
                 #每隔8小时执行一次 
-                if time.time() % (1 * 3600) < 1:  # 每8小时执行一次 测试时按1小时执行一次
+                if time.time() % (8 * 3600) < 1:  # 每8小时执行一次 测试时按1小时执行一次
                     logger.warn("定时任务: 每8小时执行一次,获取联系人和群聊信息")
                     self.contacts = self.getAllContacts()
                     time.sleep(0.5)
@@ -222,7 +222,7 @@ class WcFerryChannel(ChatChannel):
                         continue
                     self.saveOtherInfo()
                     # 保存联系人信息
-                    logger.info(f"获取联系人信息: {len(self.contacts)}个,保存到文件 wcferry_contacts.json")
+                    logger.warn(f"获取联系人信息: {len(self.contacts)}个,保存到文件 wcferry_contacts.json")
                     save_json_to_file(self.directory, self.contacts, "wcferry_contacts.json")
                     # 合并微信群信息
                     time.sleep(0.5)
@@ -230,7 +230,7 @@ class WcFerryChannel(ChatChannel):
                     if new_rooms:
                         self.rooms = self.merge_rooms(self.rooms, new_rooms)
                     if self.rooms:
-                        logger.info(f"获取微信群信息: {len(self.rooms)}个,保存到文件 wcferry_rooms.json")
+                        logger.warn(f"获取微信群信息: {len(self.rooms)}个,保存到文件 wcferry_rooms.json")
                         save_wxgroups_to_file(self.rooms)
         except KeyboardInterrupt:
             # 这里可以执行任何清理工作
