@@ -30,10 +30,12 @@ def get_room_info(wework, conversation_id):
         logger.error(f"获取群聊信息失败: {rooms}")
         return None
     time.sleep(1)
-    logger.info(f"获取所有微信群: {len(rooms['room_list'])}个")
+    logger.info(f"get_room_info获取所有微信群: {len(rooms['room_list'])}个")
     for room in rooms['room_list']:
         if room['conversation_id'] == conversation_id:
+            logger.info(f"get_room_info获取群聊信息成功: {room}")
             return room
+    logger.error(f"未找到对应的群聊信息: {conversation_id}")
     return None
 
 
