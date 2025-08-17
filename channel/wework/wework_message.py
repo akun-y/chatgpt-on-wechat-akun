@@ -168,7 +168,8 @@ class WeworkMessage(ChatMessage):
 
             data = wework_msg['data']
             login_info = self.wework.get_login_info()
-            nickname = login_info['nickname']
+            logger.info(f"login_info:{login_info}")
+            nickname = login_info['nickname'] or login_info['username']
             user_id = login_info['user_id']
 
             sender_id = data.get('sender')
