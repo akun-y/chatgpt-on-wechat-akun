@@ -195,7 +195,7 @@ class WeworkMessage(ChatMessage):
                     # 检查消息内容是否包含@用户名。处理复制粘贴的消息，这类消息可能不会触发@通知，但内容中可能包含 "@用户名"。
                     content = data.get('content', '')
                     name = nickname
-                    pattern = f"@{re.escape(name)}(\u2005|\u0020)"
+                    pattern = f"@{re.escape(name)}(?:[\\u2005\\u0020]|$)"
                     if re.search(pattern, content):
                         logger.warn(f"微信消息 {self.msg_id} 包含@ {name}")
                         self.is_at = True
