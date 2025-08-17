@@ -119,7 +119,7 @@ class ChatChannel(Channel):
                             logger.warning(f"[chat_channel] Nickname {nick_name} in In BlackList, ignore")
                             return None
 
-                        logger.info("[chat_channel]receive group at")
+                        logger.info("[chat_channel]收到AT@消息")
                         if not conf().get("group_at_off", False):
                             flag = True
                         self.name = self.name if self.name is not None else ""  # 部分渠道self.name可能没有赋值

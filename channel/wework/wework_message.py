@@ -190,13 +190,13 @@ class WeworkMessage(ChatMessage):
                     self.other_user_nickname = room_info.get('nickname', None) if room_info else None
                     at_list = data.get('at_list', [])
                     self.is_at = nickname in at_list
-
+                    logger.info(f"[wework_message]是否@消息？:{nickname} in {at_list}")
                     # 检查消息内容是否包含@用户名。处理复制粘贴的消息，这类消息可能不会触发@通知，但内容中可能包含 "@用户名"。
                     content = data.get('content', '')
                     name = nickname
                     pattern = f"@{re.escape(name)}(\u2005|\u0020)"
                     if re.search(pattern, content):
-                        logger.debug(f"Wechaty message {self.msg_id} includes at")
+                        logger.warn(f"微信消息 {self.msg_id} 包含@ {name}")
                         self.is_at = True
 
                     if not self.actual_user_id:
