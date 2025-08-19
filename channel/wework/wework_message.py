@@ -74,18 +74,36 @@ def get_room_info(wework, conversation_id):
 
 
 def cdn_download(wework, message, file_name):
-    data = message["data"]
-    url = data["cdn"]["url"]
-    auth_key = data["cdn"]["auth_key"]
-    aes_key = data["cdn"]["aes_key"]
-    file_size = data["cdn"]["size"]
+    """通过 CDN URL 下载文件"""
+    data = message["data"]["cdn"]
+    url = data.get("url")
+    auth_key = data.get("auth_key")
+    aes_key = data.get("aes_key")
+    file_size = data.get("size")
 
     # 获取当前工作目录，然后与文件名拼接得到保存路径
     current_dir = os.getcwd()
     save_path = os.path.join(current_dir, "tmp", file_name)
 
     result = wework.wx_cdn_download(url, auth_key, aes_key, file_size, save_path)
-    logger.debug(result)
+    logger.debug(f"cdn_download result: {result}")
+    return result
+
+def c2c_download(wework, message, file_name):
+    """通过 file_id 下载文件"""
+    data = message["data"]["cdn"]
+    file_id = data.get("file_id")
+    aes_key = data.get("aes_key")
+    file_size = data.get("size")
+    file_type = data.get("file_type", 5)  # 默认类型 5
+
+    # 获取当前工作目录，然后与文件名拼接得到保存路径
+    current_dir = os.getcwd()
+    save_path = os.path.join(current_dir, "tmp", file_name)
+
+    result = wework.c2c_cdn_download(file_id, aes_key, file_size, file_type, save_path)
+    logger.debug(f"c2c_download result: {result}")
+    return result
 
 
 def c2c_download_and_convert(wework, message, file_name):
@@ -134,7 +152,13 @@ class WeworkMessage(ChatMessage):
                 current_dir = os.getcwd()
                 self.ctype = ContextType.IMAGE
                 self.content = os.path.join(current_dir, "tmp", file_name)
-                self._prepare_fn = lambda: cdn_download(wework, wework_msg, file_name)
+                # 根据消息格式选择下载方法
+                if "url" in wework_msg["data"]["cdn"]:
+                    logger.debug("使用 CDN URL 方式下载图片")
+                    self._prepare_fn = lambda: cdn_download(wework, wework_msg, file_name)
+                else:
+                    logger.debug("使用 C2C 方式下载图片")
+                    self._prepare_fn = lambda: c2c_download(wework, wework_msg, file_name)
             elif wework_msg["type"] == 11072:  # 新成员入群通知
                 self.ctype = ContextType.JOIN_GROUP
                 member_list = wework_msg['data']['member_list']
