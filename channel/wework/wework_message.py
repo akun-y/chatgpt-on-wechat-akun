@@ -85,9 +85,9 @@ def cdn_download(wework, message, file_name):
     current_dir = os.getcwd()
     save_path = os.path.join(current_dir, "tmp", file_name)
 
-    # result = wework.wx_cdn_download(url, auth_key, aes_key, file_size, save_path)
-    result = wework.wx_cdn_download(url, auth_key, aes_key, save_path)
-    logger.debug(f"cdn_download result: {result}")
+    result = wework.wx_cdn_download(url, auth_key, aes_key, file_size, save_path)
+   # result = wework.wx_cdn_download(url, auth_key, aes_key, save_path) #会导致企微意外退出
+    logger.info(f"cdn_download result: {result}")
     return result
 
 def c2c_download(wework, message, file_name):
