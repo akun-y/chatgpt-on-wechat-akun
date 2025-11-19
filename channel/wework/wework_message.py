@@ -85,7 +85,8 @@ def cdn_download(wework, message, file_name):
     current_dir = os.getcwd()
     save_path = os.path.join(current_dir, "tmp", file_name)
 
-    result = wework.wx_cdn_download(url, auth_key, aes_key, file_size, save_path)
+    # result = wework.wx_cdn_download(url, auth_key, aes_key, file_size, save_path)
+    result = wework.wx_cdn_download(url, auth_key, aes_key, save_path)
     logger.debug(f"cdn_download result: {result}")
     return result
 
