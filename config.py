@@ -243,7 +243,8 @@ available_setting = {
     "groupx_username":"",
     "groupx_password":"",
     "restart_time": "01:00",  # 每天重启时间，格式为HH:MM
-    "restart_enabled": True   # 是否启用自动重启功能
+    "restart_enabled": True,   # 是否启用自动重启功能
+    "chat_billing_enabled": False  # 是否开启聊天收费
 }
 
 
