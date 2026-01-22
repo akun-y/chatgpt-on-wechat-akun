@@ -178,6 +178,7 @@ class DifyBot(Bot):
                 if image:
                     reply = Reply(ReplyType.IMAGE, image)
                 else:
+                    logger.error(f"[DIFY] 下载图片失败，图片链接：{image_url}")
                     reply = Reply(ReplyType.TEXT, f"图片链接：{image_url}")
             elif item['type'] == 'file':
                 file_url = self._fill_file_base_url(item['content'])
@@ -206,6 +207,7 @@ class DifyBot(Bot):
             if image:
                 final_reply = Reply(ReplyType.IMAGE, image)
             else:
+                logger.error(f"[DIFY] 下载图片失败，图片链接：{image_url}")
                 final_reply = Reply(ReplyType.TEXT, f"图片链接：{image_url}")
         elif final_item['type'] == 'file':
             file_url = self._fill_file_base_url(final_item['content'])
@@ -248,7 +250,7 @@ class DifyBot(Bot):
             for block in pic_res.iter_content(1024):
                 size += len(block)
                 image_storage.write(block)
-            logger.debug(f"[WX] download image success, size={size}, img_url={url}")
+            logger.info(f"[WX] download image success, size={size}, img_url={url}")
             image_storage.seek(0)
             return image_storage
         except Exception as e:
