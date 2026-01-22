@@ -336,8 +336,15 @@ class WeworkChannel(ChatChannel):
             ret = wework.send_image(receiver, temp_path)
             logger.info("[WX] sendImage, receiver={}".format(receiver))
 
-            # 删除临时文件
-            os.remove(temp_path)
+            # 延迟15秒删除临时文件，防止发送未完成
+            def delete_temp_file():
+                try:
+                    if os.path.exists(temp_path):
+                        os.remove(temp_path)
+                except Exception as e:
+                    logger.error(f"[WX] Failed to delete temp file {temp_path}: {e}")
+
+            threading.Timer(15, delete_temp_file).start()
         elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
             img_url = reply.content
             filename = str(uuid.uuid4())
