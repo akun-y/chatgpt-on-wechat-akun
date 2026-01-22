@@ -159,6 +159,12 @@ class DifyBot(Bot):
         at_prefix = ""
         channel = context.get("channel")
         is_group = context.get("isgroup", False)
+        
+        # Prepare headers with API key if available
+        headers = {}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+            
         if is_group:
             at_prefix = "@" + context["msg"].actual_user_nickname + "\n"
         for item in parsed_content[:-1]:
@@ -168,14 +174,14 @@ class DifyBot(Bot):
                 reply = Reply(ReplyType.TEXT, content)
             elif item['type'] == 'image':
                 image_url = self._fill_file_base_url(item['content'])
-                image = self._download_image(image_url)
+                image = self._download_image(image_url, headers=headers)
                 if image:
                     reply = Reply(ReplyType.IMAGE, image)
                 else:
                     reply = Reply(ReplyType.TEXT, f"图片链接：{image_url}")
             elif item['type'] == 'file':
                 file_url = self._fill_file_base_url(item['content'])
-                file_path = self._download_file(file_url)
+                file_path = self._download_file(file_url, headers=headers)
                 if file_path:
                     reply = Reply(ReplyType.FILE, file_path)
                 else:
@@ -196,14 +202,14 @@ class DifyBot(Bot):
             final_reply = Reply(ReplyType.TEXT, final_item['content'])
         elif final_item['type'] == 'image':
             image_url = self._fill_file_base_url(final_item['content'])
-            image = self._download_image(image_url)
+            image = self._download_image(image_url, headers=headers)
             if image:
                 final_reply = Reply(ReplyType.IMAGE, image)
             else:
                 final_reply = Reply(ReplyType.TEXT, f"图片链接：{image_url}")
         elif final_item['type'] == 'file':
             file_url = self._fill_file_base_url(final_item['content'])
-            file_path = self._download_file(file_url)
+            file_path = self._download_file(file_url, headers=headers)
             if file_path:
                 final_reply = Reply(ReplyType.FILE, file_path)
             else:
@@ -215,9 +221,9 @@ class DifyBot(Bot):
 
         return final_reply, None
 
-    def _download_file(self, url):
+    def _download_file(self, url, headers=None):
         try:
-            response = requests.get(url)
+            response = requests.get(url, headers=headers)
             response.raise_for_status()
             parsed_url = urlparse(url)
             logger.debug(f"Downloading file from {url}")
@@ -233,9 +239,9 @@ class DifyBot(Bot):
             logger.error(f"Error downloading {url}: {e}")
         return None
 
-    def _download_image(self, url):
+    def _download_image(self, url, headers=None):
         try:
-            pic_res = requests.get(url, stream=True)
+            pic_res = requests.get(url, stream=True, headers=headers)
             pic_res.raise_for_status()
             image_storage = io.BytesIO()
             size = 0
