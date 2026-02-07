@@ -5,7 +5,10 @@ from config import conf
 class DifySession(object):
     def __init__(self, session_id: str, user: str, conversation_id: str=''):
         self._session_id = session_id
-        self._user = user
+        if not user:
+            self._user = session_id
+        else:
+            self._user = user
         self._conversation_id = conversation_id
         self._user_message_counter = 0
         # 新增字段
@@ -18,7 +21,7 @@ class DifySession(object):
         return self._session_id
 
     def get_user(self):
-        return self._user
+        return self._user if self._user else "default"
 
     def get_conversation_id(self):
         return self._conversation_id
