@@ -12,6 +12,9 @@ from common.log import logger
 
 _ROOMS_CACHE = None
 _ROOMS_CACHE_MTIME = None
+ROOMS_PAGE_SIZE = 500
+ROOMS_MAX_PAGES = 100
+WEWORK_ROOMS_LOG_PREFIX = "[wework-rooms]"
 
 def load_rooms_cache(file_path):
     global _ROOMS_CACHE, _ROOMS_CACHE_MTIME
@@ -36,17 +39,65 @@ def get_with_retry(get_func, max_retries=5, delay=5):
     return result
 
 
-def get_room_info_from_wework(wework, conversation_id):    
-    rooms = wework.get_rooms()
+def get_rooms_paginated(wework, page_size=ROOMS_PAGE_SIZE, max_pages=ROOMS_MAX_PAGES):
+    all_rooms = []
+    page_num = 1
+    while page_num <= max_pages:
+        rooms = wework.get_rooms(page_num=page_num, page_size=page_size)
+        if not rooms or "room_list" not in rooms:
+            logger.error(
+                f"{WEWORK_ROOMS_LOG_PREFIX} 分页获取群列表失败: page={page_num}, accumulated={len(all_rooms)}, data={rooms}"
+            )
+            return None if page_num == 1 else {"room_list": all_rooms}
+
+        room_list = rooms.get("room_list") or []
+        page_count = len(room_list)
+        total_count = len(all_rooms) + page_count
+        logger.info(
+            f"{WEWORK_ROOMS_LOG_PREFIX} 获取微信群分页: page={page_num}, page_size={page_size}, count={page_count}, accumulated={total_count}"
+        )
+        if page_count >= page_size:
+            logger.warning(
+                f"{WEWORK_ROOMS_LOG_PREFIX} rooms 数量已触达/超出 {page_num * page_size} 条阈值，当前分页已满: page={page_num}, count={page_count}, accumulated={total_count}"
+            )
+        if not room_list:
+            break
+
+        all_rooms.extend(room_list)
+        if len(room_list) < page_size:
+            break
+
+        page_num += 1
+        time.sleep(1)
+
+    if page_num > max_pages:
+        logger.warning(
+            f"{WEWORK_ROOMS_LOG_PREFIX} 获取群列表达到最大分页限制: max_pages={max_pages}, total={len(all_rooms)}"
+        )
+
+    unique_rooms = {}
+    for room in all_rooms:
+        conversation_id = room.get("conversation_id")
+        if conversation_id:
+            unique_rooms[conversation_id] = room
+    deduped_rooms = list(unique_rooms.values())
+    logger.info(
+        f"{WEWORK_ROOMS_LOG_PREFIX} 群列表分页汇总完成: raw_total={len(all_rooms)}, deduped_total={len(deduped_rooms)}"
+    )
+    return {"room_list": deduped_rooms}
+
+
+def get_room_info_from_wework(wework, conversation_id):
+    rooms = get_rooms_paginated(wework)
     if not rooms or 'room_list' not in rooms:
-        logger.error(f"[wework] 传入的 conversation_id: {conversation_id}")
-        logger.error(f"[wework] 获取群信息失败: {rooms}")
+        logger.error(f"{WEWORK_ROOMS_LOG_PREFIX} 远端查群失败, conversation_id={conversation_id}")
+        logger.error(f"{WEWORK_ROOMS_LOG_PREFIX} 远端群列表数据异常: {rooms}")
         return None
     time.sleep(1)
-    logger.warn(f"[wework] 获取所有微信群: {len(rooms['room_list'])}个")
+    logger.info(f"{WEWORK_ROOMS_LOG_PREFIX} 远端群列表总数: {len(rooms['room_list'])}, conversation_id={conversation_id}")
     for room in rooms['room_list']:
         if room['conversation_id'] == conversation_id:
-            logger.warn(f"[wework] 获取群信息成功: {room}")
+            logger.info(f"{WEWORK_ROOMS_LOG_PREFIX} 远端查群成功: conversation_id={conversation_id}, room={room}")
             # 更新本地缓存
             directory = os.path.join(os.getcwd(), "tmp")
             if not os.path.exists(directory):
@@ -55,7 +106,7 @@ def get_room_info_from_wework(wework, conversation_id):
             with open(file_path, 'w', encoding='utf-8') as file:
                 json.dump(rooms, file, ensure_ascii=False, indent=4)
             return room
-    logger.error(f"[wework] 未找到对应的群信息: {conversation_id}")
+    logger.error(f"{WEWORK_ROOMS_LOG_PREFIX} 远端未找到对应的群信息: conversation_id={conversation_id}")
     return None
 
 def get_room_info(wework, conversation_id):
@@ -67,9 +118,9 @@ def get_room_info(wework, conversation_id):
         rooms = rooms_data['room_list']
         for room in rooms:
             if room['conversation_id'] == conversation_id:
-                logger.info(f"[local] 获取群信息成功: {room}")
+                logger.info(f"{WEWORK_ROOMS_LOG_PREFIX} 本地缓存查群成功: conversation_id={conversation_id}, room={room}")
                 return room
-    logger.error(f"[local] 未找到对应的群信息: {conversation_id}")
+    logger.error(f"{WEWORK_ROOMS_LOG_PREFIX} 本地缓存未找到对应的群信息: conversation_id={conversation_id}")
     return get_room_info_from_wework(wework, conversation_id)
 
 

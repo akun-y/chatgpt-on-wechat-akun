@@ -191,7 +191,7 @@ class WeworkChannel(ChatChannel):
         logger.info("静默延迟60s，等待客户端刷新数据，请勿进行任何操作······")
         time.sleep(60)
         contacts = get_with_retry(wework.get_external_contacts)
-        rooms = get_with_retry(wework.get_rooms)
+        rooms = get_with_retry(lambda: get_rooms_paginated(wework))
         directory = os.path.join(os.getcwd(), "tmp")
         if not contacts or not rooms:
             logger.error("获取contacts或rooms失败，程序退出")
