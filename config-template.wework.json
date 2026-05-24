@@ -1,0 +1,52 @@
+{
+  "open_ai_api_key": "YOUR API KEY",
+  "model": "dify",
+  "channel_type": "wework",
+  "proxy": "",
+  "debug": false,
+  "hot_reload": true,
+  "wework_smart": true,
+  "plugin_trigger_prefix": "$",
+  "use_global_plugin_config": false,
+  "single_chat_prefix": [
+    "bot",
+    "@bot"
+  ],
+  "single_chat_reply_prefix": "[AI] ",
+  "group_chat_prefix": [
+    "",
+    "ai",
+    "bot",
+    "@bot"
+  ],
+  "group_name_white_list": [
+    "ALL_GROUP"
+  ],
+  "group_chat_in_one_session": [
+    "ALL_GROUP"
+  ],
+  "image_create_prefix": [
+    "画",
+    "看",
+    "找"
+  ],
+  "accept_friend": true,
+  "speech_recognition": false,
+  "group_speech_recognition": false,
+  "voice_reply_voice": false,
+  "conversation_max_tokens": 1000,
+  "expires_in_seconds": 3600,
+  "dify_api_base": "https://api.dify.ai/v1",
+  "dify_api_key": "app-xxx",
+  "dify_app_type": "chatbot",
+  "dify_conversation_max_messages": 50,
+  "dify_error_reply": "正在处理您的请求，请稍候...",
+  "groupx_url": "http://127.0.0.1:8988",
+  "groupx_username": "",
+  "groupx_password": "",
+  "restart_time": "01:00",
+  "restart_enabled": true,
+  "bot_account": "bot",
+  "bot_name": "Akun",
+  "system_name": "cow-wework"
+}
