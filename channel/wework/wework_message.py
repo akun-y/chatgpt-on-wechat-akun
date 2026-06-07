@@ -109,6 +109,36 @@ def get_room_info_from_wework(wework, conversation_id):
     logger.error(f"{WEWORK_ROOMS_LOG_PREFIX} 远端未找到对应的群信息: conversation_id={conversation_id}")
     return None
 
+def resolve_receiver(wework, receiver: str) -> str:
+    """将私聊 user_id 解析为企微 conversation_id（S:botId_userId）。"""
+    if not receiver or receiver.startswith(("S:", "R:")):
+        return receiver
+
+    directory = os.path.join(os.getcwd(), "tmp")
+    file_path = os.path.join(directory, "wework_contacts.json")
+    if os.path.exists(file_path):
+        with open(file_path, "r", encoding="utf-8") as f:
+            contacts = json.load(f)
+        for user in contacts.get("user_list", []):
+            if user.get("user_id") == receiver:
+                conv_id = user.get("conversation_id")
+                if conv_id:
+                    logger.info(
+                        f"私聊 receiver 转换: user_id={receiver} -> conversation_id={conv_id}"
+                    )
+                    return conv_id
+
+    login_info = wework.get_login_info()
+    bot_user_id = login_info.get("user_id")
+    if bot_user_id:
+        conv_id = f"S:{bot_user_id}_{receiver}"
+        logger.info(
+            f"私聊 receiver 构造: user_id={receiver} -> conversation_id={conv_id}"
+        )
+        return conv_id
+    return receiver
+
+
 def get_room_info(wework, conversation_id):
     directory = os.path.join(os.getcwd(), "tmp")
     file_path = os.path.join(directory, "wework_rooms.json")
@@ -297,6 +327,31 @@ class WeworkMessage(ChatMessage):
 
                 else:
                     logger.error("群聊消息中没有找到 conversation_id 或 room_conversation_id")
+            else:
+                #self.ctype = ContextType.C2C
+                self.ctype = ContextType.TEXT
+                self.content = wework_msg['data']['content']
+                self.from_user_id = data.get('sender')
+                self.from_user_nickname = sender_name
+                self.to_user_id = user_id
+                self.to_user_nickname = nickname
+                self.other_user_nickname = sender_name
+                self.other_user_id = conversation_id
+                if self._rawmsg:
+                    usr = wework.get_contact_detail(self.actual_user_id)
+                    self._rawmsg['sender_info'] = make_contact_info(
+                        name=usr.get('username', ''),
+                        wxid=usr.get('unionid', ''),
+                        alias=usr.get('acctid', ''),
+                        avatar=usr.get('avatar', ''),
+                        display_name=usr.get('nickname', self.actual_user_nickname),
+                        corp_id=usr.get('corp_id', ''),
+                        remark=usr.get('remark', ''),
+                        real_name=usr.get('real_name', ''),
+                        mobile=usr.get('mobile', ''),
+                    )
+                    logger.info(f"添加 actual_user_id 用户信息到 _rawmsg: {self._rawmsg}")
+                logger.info(f"收到单聊消息: {self.msg_id} 发送者: {sender_name} 接收者: {nickname} 发送user_id: {self.from_user_id} 接收user_id: {self.to_user_id}")
 
             logger.debug(f"WeworkMessage has been successfully instantiated with message id: {self.msg_id}")
         except Exception as e:

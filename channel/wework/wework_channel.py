@@ -278,8 +278,8 @@ class WeworkChannel(ChatChannel):
     # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
     def send(self, reply: Reply, context: Context):
         ret = False
-        receiver = context["receiver"]
-        
+        receiver = resolve_receiver(wework, context["receiver"])
+
         if reply.type == ReplyType.TEXT or reply.type == ReplyType.TEXT_:
             match = re.search(r"^@(.*?)\n", reply.content)
             if match:
@@ -301,8 +301,8 @@ class WeworkChannel(ChatChannel):
                 # wework.send_room_at_msg(receiver, new_content, wxid_list)
                 # wework.send_room_at_msg(receiver, new_content,[self.user_id])
             else:
-                wework.send_text(receiver, reply.content)
-            logger.info("[WX] sendMsg={}, receiver={}".format(reply, receiver))
+                ret = wework.send_text(receiver, reply.content)
+            logger.info("[WX] sendMsg={}, receiver={}, ret={}".format(reply, receiver, ret))
         elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
             ret = wework.send_text(receiver, reply.content)
             logger.info("[WX] sendMsg={}, receiver={}".format(reply, receiver))
