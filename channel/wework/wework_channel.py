@@ -127,7 +127,7 @@ def all_msg_handler(wework_instance: ntwork.WeWork, message):
                 cmsg = create_message(
                     wework_instance=wework_instance, message=message, is_group=is_group
                 )
-            except NotImplementedError as e:
+            except (NotImplementedError, KeyError) as e:
                 logger.error(f"[WX]{message.get('MsgId', 'unknown')} 跳过: {e}")
                 return None
             delay = random.randint(1, 2)

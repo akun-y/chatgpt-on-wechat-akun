@@ -217,10 +217,11 @@ class WeworkMessage(ChatMessage):
             self.wework = wework
             
             if wework_msg["type"] == 11041:  # 文本消息类型
-                if any(substring in wework_msg['data']['content'] for substring in ("该消息类型暂不能展示", "不支持的消息类型")):
+                text_content = wework_msg['data'].get('content', '')
+                if any(substring in text_content for substring in ("该消息类型暂不能展示", "不支持的消息类型")):
                     return
                 self.ctype = ContextType.TEXT
-                self.content = wework_msg['data']['content']
+                self.content = text_content
             elif wework_msg["type"] == 11044:  # 语音消息类型，需要缓存文件
                 file_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + ".silk"
                 base_name, _ = os.path.splitext(file_name)
@@ -330,9 +331,6 @@ class WeworkMessage(ChatMessage):
                 else:
                     logger.error("群聊消息中没有找到 conversation_id 或 room_conversation_id")
             else:
-                #self.ctype = ContextType.C2C
-                self.ctype = ContextType.TEXT
-                self.content = wework_msg['data']['content']
                 self.actual_user_id = sender_id
                 self.actual_user_nickname = sender_name
                 self.from_user_id = data.get('sender')
