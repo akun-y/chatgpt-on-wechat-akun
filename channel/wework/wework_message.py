@@ -282,6 +282,8 @@ class WeworkMessage(ChatMessage):
             conversation_id = data.get('conversation_id')
             sender_name = data.get("sender_name")
 
+            self.my_msg = sender_id == user_id
+
             self.from_user_id = user_id if sender_id == user_id else conversation_id
             self.from_user_nickname = nickname if sender_id == user_id else sender_name
             self.to_user_id = user_id
@@ -331,6 +333,8 @@ class WeworkMessage(ChatMessage):
                 #self.ctype = ContextType.C2C
                 self.ctype = ContextType.TEXT
                 self.content = wework_msg['data']['content']
+                self.actual_user_id = sender_id
+                self.actual_user_nickname = sender_name
                 self.from_user_id = data.get('sender')
                 self.from_user_nickname = sender_name
                 self.to_user_id = user_id
